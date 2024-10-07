@@ -19,19 +19,24 @@ export const getEntryStatus = sys => {
     return false;
   }
   let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${accountId}/smartcode`;
-  return await fetch(url,{
+  const response = await fetch(url,{
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'token': apiToken
     }
-  })
-  .then(res => {
-    return res.ok || res.status === 429;
- })
-  .catch(err => {
-    return false;
   });
+
+  if(response.ok){
+    return {
+      code: 200,
+      message: 'User autherized with the VWO'
+    };
+  }
+  else{
+    const resp = await response.json();
+    return resp._errors[0];
+  }
  }
 
 export function getRequiredEntryInformation(entry, contentTypes, defaultLocale){

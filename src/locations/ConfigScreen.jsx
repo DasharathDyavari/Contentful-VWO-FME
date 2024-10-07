@@ -2,7 +2,6 @@ import React from 'react';
 import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import ConnectButton from '../ConnectButton';
 import { ExternalLinkIcon} from '@contentful/f36-icons';
 import { validateCredentials } from '../utils';
 const VARIATION_CONTAINER_ID = 'variationFmeContainer';
@@ -29,8 +28,8 @@ const styles = {
     backgroundColor: "#26134D",
   }),
   formItem: css({
-    marginTop: tokens.spacingXs,
-    marginBottom: tokens.spacingXs
+    marginTop: tokens.spacingS,
+    marginBottom: '0px'
   }),
 };
 
@@ -320,15 +319,15 @@ export default class ConfigScreen extends React.Component {
     const accountId = this.state.config.accountId;
     const apiToken = this.state.config.accessToken;
 
-    const connectedToVwo = await validateCredentials(accountId,apiToken);
-    if(connectedToVwo){
+    const validateData = await validateCredentials(accountId,apiToken);
+    if(validateData.code === 200){
       this.props.updateCredentials({
         accountId: this.state.config.accountId,
         token: this.state.config.accessToken
       });
     }
     else{
-      this.props.sdk.notifier.error("Something went wrong. Please check the credentials properly and try again.");
+      this.props.sdk.notifier.error(validateData.message);
     }
 
     values.loading = false;
@@ -366,7 +365,7 @@ export default class ConfigScreen extends React.Component {
                   <Paragraph marginTop='spacingS'>Locate auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
               </FormControl>
               <Note marginBottom='spacingXl'>This token provides read-only (browse) access to organization-level information stored in VWO, accessible via API by any users in the current Contentful space.</Note>
-              <Button variant='primary' onClick={connectToVwo}>Connect with VWO</Button>
+              <Button variant='primary' onClick={this.connectToVwo} isLoading={this.state.loading}>Connect with VWO</Button>
             </Flex>}
             {/* After connecting to VWO */}
             {!!this.props.accessToken
