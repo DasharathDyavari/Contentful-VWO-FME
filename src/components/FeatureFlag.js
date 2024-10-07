@@ -1,9 +1,10 @@
-import { Card, Button,Heading, Box, Text, Paragraph, Flex, Grid } from '@contentful/f36-components';
-import React, {useState} from 'react';
+import { Card, Button,Heading, Box, Text, Paragraph, IconButton, Flex, Grid } from '@contentful/f36-components';
+import React, {useEffect, useState} from 'react';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { PlusIcon } from '@contentful/f36-icons';
+import { PlusIcon, EditIcon } from '@contentful/f36-icons';
 import CreateFeatureFlagModal from './CreateFeatureFlagModal';
+import EditFeatureFlagModal from './EditFeatureFlagModal';
 
 const styles = {
    flexContainer: css({
@@ -22,32 +23,66 @@ const styles = {
       height: '150px',
       border: '1px solid lightgrey',
       borderRadius: '10px'
+   }),
+   editIcon: css({
+      position: 'absolute',
+      right: '0px',
+      top: '0px'
    })
  };
 
 function FeatureFlag(props) {
 
    const [createFlag, setCreateFlag] = useState(false);
-   const [featureFlag, setFeatureFlag] = useState(props.featureFlag);
    const [editMode, setEditMode] = useState(false);
+   const [loading, setLoading] = useState(false);
+   const [featureFlag, setFeatureFlag] = useState(props.featureFlag);
 
-   const createNewFeatureFlag = (featureFlag) => {
+   const createNewFeatureFlag = async (featureFlag) => {
       if(!featureFlag){
          setCreateFlag(false);
          return;
       }
       setFeatureFlag(featureFlag);
       if(featureFlag.featureKey){
-         props.onFeatureFlagCreation(featureFlag);
+         await props.onFeatureFlagCreation(featureFlag);
       }
       setCreateFlag(false);
    }
-   console.log('sdk: ',props.sdk);
-   const isFeatureFlagCreated = props.featureFlag?.featureKey;
 
+   const editFeatureFlag = async (featureFlag) => {
+      if(!featureFlag){
+         setEditMode(false);
+         return;
+      }
+      setLoading(true);
+      let updatedFeatureFlag = {...props.featureFlag,
+         name: featureFlag.flagName,
+         featureType: featureFlag.featureType,
+         description: featureFlag.description
+       }
+      return props.updateFeatureFlagDetails(updatedFeatureFlag)
+      .then(resp => {
+         props.sdk.notifier.success('Feature flag details updated successfully');
+      })
+      .catch(err => {
+         props.sdk.notifier.error(err);
+      })
+      .finally(() => {
+         setLoading(false);
+         setEditMode(false);
+      });
+   }
+
+   useEffect(() => {
+      setFeatureFlag(props.featureFlag);
+   },[props.featureFlag]);
+
+   const isFeatureFlagCreated = featureFlag?.featureKey;
   return (
     <React.Fragment>
       <Heading element='h2'>Feature Flag:</Heading>
+      <EditFeatureFlagModal isShown={editMode} onModalClose={editFeatureFlag} loading={loading} featureFlag={props.featureFlag}/>
       {!isFeatureFlagCreated && <Flex alignItems='center' flexDirection='column' justifyContent='center' className={styles.container}>
             <Flex alignItems='center' flexDirection='column' justifyContent='center' className={styles.tile}>
                <Paragraph element='h6'>Create VWO Feature flag in order to create Variations</Paragraph>
@@ -55,7 +90,14 @@ function FeatureFlag(props) {
             </Flex>
          </Flex>}
       {isFeatureFlagCreated && <Flex alignItems='center' flexDirection='column' justifyContent='center' marginLeft='spacingL' marginTop='spacingL'>
-         <Card padding="spacingL" radius="medium" style={{width: '600px'}}>
+         <Card padding="large" radius="medium" style={{width: '600px'}}>
+            <IconButton
+               className={styles.editIcon}
+               variant="transparent"
+               onClick={() => editMode? setEditMode(false): setEditMode(true)}
+               aria-label="Select the date"
+               icon={<EditIcon />}
+            />
             <Grid rowGap="spacingM" columns='1fr 1fr' columnGap='spacingM'>
                <Grid.Item>
                   <Text as="h4" fontWeight="fontWeightBold">Feature Name:</Text>
@@ -80,21 +122,13 @@ function FeatureFlag(props) {
             </Grid>
             <Box width="100%" marginTop='200px'>
                <Text as="h4" fontWeight="fontWeightBold">Description:</Text>
-               <Paragraph>{featureFlag.description}</Paragraph>
+               <Paragraph>{featureFlag.description || '-'}</Paragraph>
             </Box>
          </Card>
       </Flex>}
       <CreateFeatureFlagModal
-         sdk={props.sdk}
-         setCreateFlag={setCreateFlag}
-         vwoVariation={props.vwoVariation}
-         contentTypes={props.contentTypes}
-         onCreateEntry={props.onCreateVariation}
-         updateVwoVariationContent={props.updateVwoVariationContent}
+         entryId={props.sdk.ids.entry}
          onModalClose={createNewFeatureFlag}
-         linkExistingEntry={props.linkExistingEntry}
-         entries={props.entries}
-         onCreateVariation={props.onCreateVariation}
          isShown={createFlag}/>
     </React.Fragment>
   )

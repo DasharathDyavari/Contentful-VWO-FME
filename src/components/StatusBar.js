@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { CheckCircleIcon, InfoCircleIcon, ChevronRightIcon } from '@contentful/f36-icons';
 import tokens from '@contentful/f36-tokens';
-import { Status } from './constants';
+import { Text } from '@contentful/f36-components';
 
 const styles = {
   note: css({
@@ -39,7 +39,7 @@ function StatusItem(props) {
              color={'positive'}
              size="small"
            />
-           <span>{props.children}</span>
+           <Text>{props.children}</Text>
          </div>
        );
    }
@@ -51,7 +51,7 @@ function StatusItem(props) {
             color={'muted'}
             size="small"
           />
-          <span>{props.children}</span>
+          <Text>{props.children}</Text>
         </div>
       );
    }

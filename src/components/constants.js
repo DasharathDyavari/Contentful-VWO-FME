@@ -4,3 +4,7 @@ export const Status = {
    PublishVariations: 'PublishVariations'
  };
  
+ export const FlagTypes = {
+  TEMPORARY: 'TEMPORARY',
+  PERMANENT: 'PERMANENT'
+};

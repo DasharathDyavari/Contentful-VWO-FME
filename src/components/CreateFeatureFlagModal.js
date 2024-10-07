@@ -1,14 +1,9 @@
-import { Modal, Button, Form, FormControl, TextInput, Textarea, Stack, Radio, ModalControls, EntryCard, MenuItem } from '@contentful/f36-components';
+import { Modal, Button, Form, FormControl, Grid, TextInput, Textarea, Stack, Radio, ModalControls } from '@contentful/f36-components';
 import React from 'react';
-import { mapVwoVariationsAndContent } from '../utils';
 import useMethods from 'use-methods';
-import CreateContent from './CreateContent';
 import { css } from 'emotion';
-
-const FlagTypes = {
-   TEMPORARY: 'temporary',
-   PERMANENT: 'permanent'
-};
+import { FlagTypes } from './constants';
+const CONTENTFUL = 'contentful';
 
 const styles = {
    fieldItem: css({
@@ -17,29 +12,16 @@ const styles = {
 }
 
 const initialData = ({
-   step: 1,
    flagName: '',
-   featureKey: '',
    description: '',
-   type: FlagTypes.TEMPORARY,
-   contentId: '',
-   variable: '',
-   manualEdit: false
+   loading: false,
+   type: FlagTypes.TEMPORARY
  });
 
  const methods = state => {
    return {
-      setStep(step){
-         state.step = step;
-      },
-      setVariable(variable){
-         state.variable = variable;
-      },
       setFlagName(flagName){
          state.flagName = flagName;
-      },
-      setFeatureKey(featureKey){
-         state.featureKey = featureKey;
       },
       setDescription(description){
          state.description = description;
@@ -47,11 +29,8 @@ const initialData = ({
       setType(type){
          state.type = type;
       },
-      setContentId(id){
-         state.contentId = id;
-      },
-      setManuallyTyped(manualEdit){
-         state.manualEdit = manualEdit
+      setLoading(loading){
+         state.loading = loading;
       }
    }
  }
@@ -61,68 +40,55 @@ function CreateFeatureFlagModal(props) {
    const globalState = useMethods(methods,initialData);
    const [state, actions] = globalState;
 
-   const generateKeyFromFlagName = (flagName) => {
-      return flagName.split(' ').map(word => word.toLowerCase()).map((word,index) => index? word.charAt(0).toUpperCase() + word.slice(1): word).join('');
+   const createFeatureFlag = async () => {
+      actions.setLoading(true);
+      const featureFlagCreated = {
+         name: state.flagName,
+         featureKey: `${CONTENTFUL}_${props.entryId}`,
+         description: state.description,
+         featureType: state.type,
+         variables: []
+      };
+      await props.onModalClose(featureFlagCreated);
+      actions.setLoading(false);
    }
-
-   const onFlagNameChange = (value) => {
-      actions.setFlagName(value);
-      if(!state.featureKey || !state.manualEdit){
-         actions.setManuallyTyped(false);
-         actions.setFeatureKey(generateKeyFromFlagName(value));
-      }
-   }
-
-   const createFeatureFlag = () => {
-      if(state.step == 1){
-         actions.setStep(2);
-      } else{
-         const featureFlagCreated = {
-            name: state.flagName,
-            featureKey: state.featureKey,
-            description: state.description,
-            featureType: state.type,
-            id: props.sdk.ids.entry // Replace this id with contentful id
-         };
-         props.onModalClose(featureFlagCreated);
-      }
-   }
-   const mappedVariation = mapVwoVariationsAndContent([props.vwoVariation], props.entries, props.contentTypes, props.sdk.locales.default)[0];
-   let isDisabled = false;
-   if(state.step == 2) {
-      isDisabled = !state.variable || mappedVariation.vwoVariation?.jsonContent?.value == 'notSet';
-   } else{
-      isDisabled = (!state.flagName.length || !state.featureKey.length);
-   }
-
+   const isDisabled = !state.flagName.length;
   return (
     <React.Fragment>
       <Modal onClose={() => props.onModalClose('')} isShown={props.isShown} size='medium'>
          {() => (
          <>
             <Modal.Header
-               title={state.step == 1?  "Create Feature Flag": 'Create Variable'}
+               title="Create Feature Flag"
                onClose={() => props.onModalClose('')}
             />
             <Modal.Content>
-               {state.step == 1 && <Form onSubmit={createFeatureFlag}>
+               <Form onSubmit={createFeatureFlag}>
                   <FormControl className={styles.fieldItem}>
                      <FormControl.Label isRequired>Flag name</FormControl.Label>
                      <TextInput
                         value={state.flagName}
-                        onChange={(e) => onFlagNameChange(e.target.value)}/>
-                  </FormControl>
-                  <FormControl className={styles.fieldItem}>
-                     <FormControl.Label isRequired>Feature key</FormControl.Label>
-                     <TextInput
-                        value={state.featureKey}
-                        onChange={(e) => {actions.setFeatureKey(e.target.value); actions.setManuallyTyped(true)}}/>
+                        maxLength='255'
+                        onChange={(e) => actions.setFlagName(e.target.value)}/>
+                     <Grid columns="auto 80px">
+                        <FormControl.HelpText>
+                           Name should be no longer than 255 characters
+                        </FormControl.HelpText>
+                        <FormControl.Counter />
+                     </Grid>
                   </FormControl>
                   <FormControl className={styles.fieldItem}>
                      <FormControl.Label>Description</FormControl.Label>
                      <Textarea
                         value={state.description}
+                        maxLength='300'
                         onChange={(e) => actions.setDescription(e.target.value)}/>
+                     <Grid columns="auto 80px">
+                        <FormControl.HelpText>
+                           Description should be no longer than 300 characters
+                        </FormControl.HelpText>
+                        <FormControl.Counter />
+                     </Grid>
                   </FormControl>
                   <FormControl className={styles.fieldItem}>
                      <FormControl.Label>Feature type</FormControl.Label>
@@ -141,43 +107,24 @@ function CreateFeatureFlagModal(props) {
                            onChange={() => actions.setType(FlagTypes.PERMANENT)}>Permanent</Radio>
                      </Stack>
                   </FormControl>
-               </Form>}
-               {state.step == 2 && <Form onSubmit={createFeatureFlag}>
-                  <FormControl className={styles.fieldItem}>
-                     <FormControl.Label>Variable name</FormControl.Label>
-                     <TextInput
-                        value={state.variable}
-                        onChange={(e) => actions.setVariable(e.target.value)}/>
-                  </FormControl>
-                  <FormControl className={styles.fieldItem}>
-                     <FormControl.Label marginBottom='spacingL'>Variable content</FormControl.Label>
-                     <CreateContent
-                        sdk={props.sdk}
-                        variation={mappedVariation}
-                        contentTypes={props.contentTypes}
-                        canRemoveContent={true}
-                        linkExistingEntry={props.linkExistingEntry}
-                        onCreateEntry={props.onCreateVariation}
-                        updateVwoVariationContent={props.updateVwoVariationContent}
-                        removeContent={props.removeContent}/>
-                  </FormControl>
-               </Form>}
+               </Form>
             </Modal.Content>
             <ModalControls>
             <Button
                 size="small"
                 variant="transparent"
-                onClick={() => state.step == 2? actions.setStep(1): props.onModalClose()}
+                onClick={() => props.onModalClose('')}
               >
-                {state.step == 1? 'Close': 'Back'}
+               Close
               </Button>
               <Button
                 size="small"
                 variant="positive"
                 isDisabled={isDisabled}
+                isLoading={state.loading}
                 onClick={createFeatureFlag}
               >
-                {state.step == 1? 'Next': 'Create'}
+               Create
               </Button>
             </ModalControls>
          </>

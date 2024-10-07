@@ -14,8 +14,27 @@ export const getEntryStatus = sys => {
    }
  };
 
+ export async function validateCredentials(accountId, apiToken){
+  if(!apiToken || !accountId){
+    return false;
+  }
+  let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${accountId}/smartcode`;
+  return await fetch(url,{
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'token': apiToken
+    }
+  })
+  .then(res => {
+    return res.ok || res.status === 429;
+ })
+  .catch(err => {
+    return false;
+  });
+ }
+
 export function getRequiredEntryInformation(entry, contentTypes, defaultLocale){
-  console.log('here: ',entry,contentTypes);
    const contentTypeId = get(entry, ['sys', 'contentType', 'sys', 'id']);
    const contentType = contentTypes.find(contentType => contentType.sys.id === contentTypeId);
 
@@ -25,8 +44,8 @@ export function getRequiredEntryInformation(entry, contentTypes, defaultLocale){
 
    const displayField = contentType.displayField;
    const descriptionFieldType = contentType.fields
-   .filter(field => field.id != displayField)
-   .find(field => field.type == 'Text');
+   .filter(field => field.id !== displayField)
+   .find(field => field.type === 'Text');
 
    const description = descriptionFieldType
     ? get(entry, ['fields', descriptionFieldType.id, defaultLocale], '')
@@ -45,22 +64,26 @@ export function getRequiredEntryInformation(entry, contentTypes, defaultLocale){
 
 export const mapVwoVariationsAndContent = (vwoVariations,entries, contentTypes, defaultLocale) => {
   return vwoVariations.map(vwoVariation => {
-    if(vwoVariation.jsonContent.value != 'notSet'){
-      let contentId = vwoVariation.jsonContent.value;
-      let entry = entries.find(entry => entry.sys.id == contentId);
+    if(vwoVariation.jsonContent.length && vwoVariation.jsonContent[0].value){
+      let contentId = vwoVariation.jsonContent[0].value;
+      let entry = entries.find(entry => entry.sys.id === contentId);
       if(!entry){
         return {vwoVariation};
       }
       let entryInformation = getRequiredEntryInformation(entry, contentTypes, defaultLocale);
       return {
         vwoVariation,
-        entry: entryInformation
+        variationContent: entryInformation
       }
     }
     return {vwoVariation};
   })
 }
 
+export const getUniqueKey = () => {
+  return new Date().getUTCMilliseconds();
+}
+
 export const variationsWithContent = (mappedVariations) => {
-  return mappedVariations.filter(mappedVariation => mappedVariation.vwoVariation.jsonContent.value != 'notSet').length;
+  return mappedVariations.filter(mappedVariation => !mappedVariation.vwoVariation.jsonContent[0]?.value).length;
 }

@@ -1,9 +1,7 @@
-import React, {useState,useEffect, useCallback} from 'react';
-import { Button, Heading, Paragraph, Select, Skeleton, Modal } from '@contentful/f36-components';
+import React, {useEffect, useCallback} from 'react';
+import { Skeleton } from '@contentful/f36-components';
 import useMethods from 'use-methods';
-import { /* useCMA, */ useSDK } from '@contentful/react-apps-toolkit';
 import { css } from 'emotion';
-import VWOLogo from '../components/VWOLogo';
 import StatusBar from '../components/StatusBar';
 import SectionSplitter from '../components/SectionSplitter';
 import FeatureFlag from '../components/FeatureFlag';
@@ -15,24 +13,17 @@ const GlobalStateContext = React.createContext(null);
 const styles = {
   editor: css({
     margin: tokens.spacingXl
-  }),
-  connect: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '&:hover': {
-      backgroundColor: 'transparent!important' // necessary to eliminate the forma styling in favor of the custom optimizely styling
-    }
   })
 };
 
 const methods = state => {
   return {
-    setInitialData({featureFlag, contentTypes, variations, entries }){
+    setInitialData({featureFlag, contentTypes, variations, entries, vwoVariations }){
       state.featureFlag = featureFlag;
       state.variations = variations;
       state.contentTypes = contentTypes;
       state.entries = entries;
+      state.vwoVariations = vwoVariations;
     },
     setLoading(loadingState){
       state.loading = loadingState;
@@ -73,63 +64,158 @@ const getInitialValues = sdk => ({
   entries: {}
 })
 
-const emptyState = (sdk) => {
-  sdk.entry.fields.featureFlag.setValue({});
-  sdk.entry.fields.variations.setValue([]);
-}
-
-const fetchInitialData = async (sdk) => {
-  const { space, ids, locales } = sdk;
+const fetchInitialData = async (props) => {
+  const { space } = props.sdk;
   const [contentTypes, entries] = await Promise.all([
     space.getContentTypes({ order: 'name', limit: 1000}),
     space.getEntries({ skip: 0, limit: 1000})
   ]);
-
-  return {
-    featureFlag: sdk.entry.fields.featureFlag.getValue(),
-    contentTypes: contentTypes.items,
-    variations: sdk.entry.fields.variations.getValue() || [],
-    entries: entries.items
+  const featureFlag = props.sdk.entry.fields.featureFlag.getValue();
+  let vwoVariations = [];
+  if(featureFlag?.id){
+    const resp = await props.client.getFeatureFlagById(featureFlag.id);
+    if(resp && resp._data?.variations){
+      vwoVariations = resp._data.variations;
+    } else {
+      const message = resp?._errors?.length? resp._errors[0].message: 'Feature flag not found. Please check on the VWO app.';
+      props.sdk.notifier.error(message);
+      featureFlag = {};
+      if(resp?._errors && resp?._errors.length && resp?._errors[0].code === 404){
+        props.sdk.entry.fields.featureFlag.setValue({});
+      }
+    }
   }
+  return {
+    featureFlag: featureFlag,
+    contentTypes: contentTypes.items,
+    variations: props.sdk.entry.fields.variations.getValue() || [],
+    entries: entries.items,
+    vwoVariations
+  }
+}
+
+const getNewVariation = (variationName, vwoVariationsLength) => {
+  let newVariation = {
+    name: variationName,
+    id: vwoVariationsLength+1,
+    key: (vwoVariationsLength+1).toString(),
+    jsonContent: vwoVariationsLength? [{variableId: 1, value: ''}]: []
+  };
+
+  return newVariation;
 }
 
 const EntryEditor = (props) => {
   const globalState = useMethods(methods, getInitialValues(props.sdk));
   const [state, actions] = globalState;
 
-  const addVwoVariation = useCallback(() => {
-    let newVariation = {
-      name: state.vwoVariations.length? `Variation-${state.vwoVariations.length}`: 'Control',
-      id: state.vwoVariations.length+1,
-      jsonContent: {
-        variableId: 1,
-        value: 'notSet'
+  const updateVariationsInVwo = async (vwoVariations) => {
+    return new Promise(async (resolve, reject) => {
+      const response = await props.client.updateVariations({variations: vwoVariations});
+      if(response && response._data){
+        resolve(response._data.variations);
       }
-    };
-    actions.setVwoVariations([...state.vwoVariations,newVariation]);
-    actions.setLoading(false);
-  });
-
-  const addContentToVwoVariation = useCallback((variationId, contentId, updateEntries) => {
-    let updatedVwoVariations = state.vwoVariations.map((_variation) => {
-      if(_variation.id == variationId){
-        _variation.jsonContent.value = contentId;
+      else if(response && response._errors?.length){
+        reject(response._errors[0].message);
       }
-      return _variation;
+      else{
+        reject('Something went wrong while updating VWO Variations. Please try again');
+      }
     });
-    actions.setVwoVariations(updatedVwoVariations);
-    if(updateEntries){
-      props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => {
-        actions.setEntries(resp.items);
+  }
+
+  const updateFeatureFlagDetails = async (updatedFeatureFlag) => {
+    return new Promise(async (resolve, reject) => {
+      const response = await props.client.updateFeatureFlag(updatedFeatureFlag);
+      if(response && response._data){
+        props.sdk.entry.fields.featureFlag.setValue(response._data);
+        actions.setFeatureFlag(response._data);
+        resolve(response._data);
+      }
+      else if(response && response._errors?.length){
+        reject(response._errors[0].message);
+      }
+      else{
+        reject('Something went wrong while updating Feature flag details. Please try again');
+      }
+    });
+  }
+
+  const addNewVwoVariation = async (variationName) => {
+    let newVwoVariation = getNewVariation(variationName, state.vwoVariations.length);
+    const updatedVwoVariations = [...state.vwoVariations,newVwoVariation];
+
+    return updateVariationsInVwo(updatedVwoVariations)
+    .then(variations => {
+      actions.setVwoVariations(variations);
+      props.sdk.notifier.success('VWO Variation added successfully');
+      return true;
+    })
+    .catch(err => {
+      props.sdk.notifier.error(err);
+      return false;
+    });
+  }
+
+  const updateVwoVariationContent = useCallback(async (variation, contentId, updateEntries) => {
+    // Default variation cannot be edited directly. Update variable instead and default variations will be updated
+    if(variation.id === 1){
+      let featureFlag = state.featureFlag;
+      featureFlag.variables = [{
+        variableName: featureFlag.variables?.variableName || 'vwoContentful',
+        dataType: 'string',
+        defaultValue: contentId
+      }];
+      updateFeatureFlagDetails(featureFlag)
+      .then(updatedFeatureFlag => {
+        actions.setFeatureFlag(updatedFeatureFlag);
+        props.sdk.entry.fields.featureFlag.setValue(updatedFeatureFlag);
+        actions.setVwoVariations(updatedFeatureFlag.variations);
+        if(updateEntries){
+          props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
+        }
+        props.sdk.notifier.success('VWO Variations updated successfully');
       })
+      .catch(err => {
+        props.sdk.notifier.error(err);
+      });
+    }
+    else{
+      let updatedVwoVariations = state.vwoVariations.map((vwoVariation) => {
+        if(vwoVariation.id === variation.id){
+          vwoVariation.jsonContent[0].value = contentId;
+        }
+        return vwoVariation;
+      });
+  
+      updateVariationsInVwo(updatedVwoVariations)
+      .then(variations => {
+        actions.setVwoVariations(variations);
+        if(updateEntries){
+          props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
+        }
+      })
+      .catch(err => {
+        props.sdk.notifier.error(err);
+      });
     }
   });
 
-  const createFeatureFlag = useCallback((featureFlag) => {
-    if(featureFlag.featureKey){
-      props.sdk.entry.fields.featureFlag.setValue(featureFlag);
-      actions.setFeatureFlag(featureFlag);
-      actions.setCurrentStep(3);
+  const createFeatureFlag = useCallback(async (featureFlag) => {
+    if(featureFlag){
+      let resp = await props.client.createFeatureFlag(featureFlag);
+      if(resp && resp._data){
+        featureFlag.id = resp._data.id;
+        props.sdk.entry.fields.featureFlag.setValue(featureFlag);
+        actions.setFeatureFlag(featureFlag);
+        let vwoVariation = resp._data.variations;
+        actions.setVwoVariations([vwoVariation]);
+        actions.setCurrentStep(3);
+        props.sdk.notifier.success('Feature flag created successfully');
+      }
+      else if(resp && resp._errors?.length){
+        props.sdk.notifier.error(resp._errors[0].message);
+      }
     }
   });
 
@@ -141,10 +227,9 @@ const EntryEditor = (props) => {
     if(!data){
       return;
     }
-
+    
     const variations = props.sdk.entry.fields.variations.getValue() || [];
     const meta = props.sdk.entry.fields.meta.getValue() || {};
-
     props.sdk.entry.fields.meta.setValue({
       ...meta,
       [vwoVariation.id]: data.sys.id
@@ -161,10 +246,10 @@ const EntryEditor = (props) => {
       }
     ]);
 
-    addContentToVwoVariation(vwoVariation.id, data.sys.id, false);
+    updateVwoVariationContent(vwoVariation, data.sys.id, false);
   });
 
-  const createVariation = useCallback(async(variation, contentType) => {
+  const onCreateVariationEntry = useCallback(async(vwoVariation, contentType) => {
     const data = await props.sdk.navigator.openNewEntry(contentType.sys.id,{
       slideIn: true
     });
@@ -178,7 +263,7 @@ const EntryEditor = (props) => {
 
     props.sdk.entry.fields.meta.setValue({
       ...meta,
-      [variation.id]: data.entity.sys.id
+      [vwoVariation.id]: data.entity.sys.id
     });
 
     props.sdk.entry.fields.variations.setValue([
@@ -191,38 +276,22 @@ const EntryEditor = (props) => {
         }
       }
     ]);
-    addContentToVwoVariation(variation.id, data.entity.sys.id, true);
+    updateVwoVariationContent(vwoVariation, data.entity.sys.id, true);
   });
 
-  const updateVwoVariationContent = useCallback((vwoVariationId, contentId) => {
-    let vwoVariations = state.vwoVariations.map(_vwoVariation => {
-      if(_vwoVariation.id == vwoVariationId){
-        _vwoVariation.jsonContent.value = contentId;
-      }
-      return _vwoVariation;
-    });
-    actions.setVwoVariations(vwoVariations);
-  });
-
-  const removeVwoVariation = useCallback((variationId) => {
-    let filteredVariations = state.vwoVariations.filter(variation => variation.id != variationId);
-    actions.setVwoVariations(filteredVariations);
-  });
-
-  useEffect(() => {
-    emptyState(props.sdk);
-    if(!state.vwoVariations.length){
-      addVwoVariation();
-    }
-    fetchInitialData(props.sdk)
+  useEffect( () => {
+    fetchInitialData(props)
       .then(data => {
         actions.setInitialData(data);
         return data;
       })
       .catch(() => {
         actions.setError('Unable to load initial data');
+      })
+      .finally(() => {
+        actions.setLoading(false);
       });
-  }, []);
+  }, [props.client]);
 
   useEffect(() => {
     const unsubsribeVariationsChange = props.sdk.entry.fields.variations.onValueChanged(data => {
@@ -242,52 +311,31 @@ const EntryEditor = (props) => {
     props.sdk.entry.fields.variations
   ])
 
-  const isFeatureFlagCreated = state.featureFlag.featureKey;
+  const isFeatureFlagCreated = state.featureFlag?.featureKey;
 
   return (
     <React.Fragment>
       <GlobalStateContext.Provider value={globalState}>
-        <Modal title='Connect with VWO' isShown={props.client}>
-          <Paragraph testId='reconnect-vwo'>
-            Your VWO session has expired. Reconnect to continue editing.
-          </Paragraph>
-          <Button
-            className={styles.connect}
-            onClick={props.openAuth}
-            testId='connect-button'
-            isFullWidth
-            buttonType='naked'>
-          </Button>
-          <VWOLogo />
-        </Modal>
-
-        <div className={styles.editor} testId='editor-page'>
+        <div className={styles.editor}>
           <StatusBar currentStep={state.currentStep}/>
           <SectionSplitter />
           {state.loading && <Skeleton.Container>
             <Skeleton.BodyText numberOfLines={10} />
           </Skeleton.Container>}
-          {!state.loading && <FeatureFlag
-            sdk={props.sdk}
-            featureFlag={state.featureFlag}
-            vwoVariation={state.vwoVariations[0]}
-            contentTypes={state.contentTypes}
-            linkExistingEntry={linkExistingEntry}
-            onCreateVariation={createVariation}
-            onFeatureFlagCreation={createFeatureFlag}
-            updateVwoVariationContent={updateVwoVariationContent}
-            entries = {state.entries}/>}
+          {!state.loading && 
+            <FeatureFlag
+              sdk={props.sdk}
+              featureFlag={state.featureFlag}
+              updateFeatureFlagDetails={updateFeatureFlagDetails}
+              onFeatureFlagCreation={createFeatureFlag}/>}
           {isFeatureFlagCreated && !state.loading && <SectionSplitter />}
           {isFeatureFlagCreated && !state.loading && 
             <Variations
               sdk={props.sdk}
-              removeVwoVariation={removeVwoVariation}
-              variations={state.variations}
+              addNewVwoVariation={addNewVwoVariation}
               contentTypes={state.contentTypes}
               vwoVariations={state.vwoVariations}
-              addVwoVariation={addVwoVariation}
-              addContentToVwoVariation={addContentToVwoVariation}
-              onCreateVariation={createVariation}
+              onCreateVariationEntry={onCreateVariationEntry}
               linkExistingEntry={linkExistingEntry}
               updateVwoVariationContent={updateVwoVariationContent}
               entries = {state.entries}/>}

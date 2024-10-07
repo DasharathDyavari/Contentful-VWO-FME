@@ -1,16 +1,44 @@
-import React from 'react';
-import { Paragraph } from '@contentful/f36-components';
-import { /* useCMA, */ useSDK } from '@contentful/react-apps-toolkit';
+import React, {useState, useEffect} from 'react';
+import { Button } from '@contentful/f36-components';
+import { css } from 'emotion';
+import tokens from '@contentful/f36-tokens';
 
-const Sidebar = () => {
-  const sdk = useSDK();
-  /*
-     To use the cma, inject it as follows.
-     If it is not needed, you can remove the next line.
-  */
-  // const cma = useCMA();
+const styles = {
+  button: css({
+    marginBottom: tokens.spacingS
+  })
+};
 
-  return <Paragraph>Hello Sidebar Component (AppId: {sdk.ids.app})</Paragraph>;
+const Sidebar = (props) => {
+  const [featureFlag, setFeatureFlag] = useState(props.sdk.entry.fields.featureFlag.getValue());
+  
+  useEffect(() => {
+    const unsubscribeFeatureFlagChange = props.sdk.entry.fields.featureFlag.onValueChanged(data => {
+      setFeatureFlag(data || {});
+    });
+
+    return () => unsubscribeFeatureFlagChange();
+  },[props.sdk.entry.fields.featureFlag]);
+
+  return <React.Fragment>
+      <Button
+        isFullWidth
+        className={styles.button}
+        isDisabled={!featureFlag?.id}
+        href={`https://vwotestapp7.vwo.com/#/full-stack/feature-flag/${featureFlag?.id}/edit/variables`}
+        as={featureFlag?.id? 'a': 'button'}
+        target="_blank">
+        View in VWO
+      </Button>
+      <Button
+        isFullWidth
+        as='a'
+        className={styles.button}
+        target="_blank"
+        href={'https://vwotestapp7.vwo.com/#/full-stack/feature-flag'}>
+        View all Feature flags
+      </Button>
+  </React.Fragment>;
 };
 
 export default Sidebar;
