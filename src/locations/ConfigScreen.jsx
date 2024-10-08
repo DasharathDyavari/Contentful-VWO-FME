@@ -1,8 +1,8 @@
 import React from 'react';
-import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button } from '@contentful/f36-components';
+import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button, Icon, Stack } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { ExternalLinkIcon} from '@contentful/f36-icons';
+import { ExternalLinkIcon, DoneIcon } from '@contentful/f36-icons';
 import { validateCredentials } from '../utils';
 const VARIATION_CONTAINER_ID = 'variationFmeContainer';
 
@@ -15,7 +15,7 @@ const styles = {
     maxWidth: tokens.contentWidthText,
     backgroundColor: tokens.colorWhite,
     zIndex: "2",
-    boxShadow: "0px 0px 20px rgba(0, 0, 0, 0.1)",
+    boxShadow: "1px 1px 20px rgba(0, 0, 0, 0.2)",
     borderRadius: "2px",
   }),
   background: css({
@@ -31,6 +31,15 @@ const styles = {
     marginTop: tokens.spacingS,
     marginBottom: '0px'
   }),
+  doneIcon: css({
+    backgroundColor: '#47B178',
+    padding: '0px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: tokens.spacingM
+  })
 };
 
 export default class ConfigScreen extends React.Component {
@@ -273,7 +282,7 @@ export default class ConfigScreen extends React.Component {
     ]);
 
     const enabledContentTypes = this.findEnabledContentTypes(allContentTypes);
-    console.log('enabled content types: ',enabledContentTypes)
+    console.log('enabled content types: ',enabledContentTypes, await this.props.sdk.app.isInstalled());
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState(
       (prevState) => {
@@ -369,10 +378,11 @@ export default class ConfigScreen extends React.Component {
             </Flex>}
             {/* After connecting to VWO */}
             {!!this.props.accessToken
-              && <Flex flexDirection='column' alignItems='center' className={styles.body}>
-              <Heading marginBottom='spacingXl'>Connected to VWO</Heading>
-              <Paragraph>You are now connected to VWO account. Add your content with different Variations and start experiments.</Paragraph>
-                <Text marginLeft='spacingM'>Account ID: {this.props.accountId}</Text>
+              && <Flex flexDirection='column' alignItems='start' className={styles.body}>
+              <Stack className={styles.doneIcon}><DoneIcon size='xlarge' variant='white'/></Stack>
+              <Heading marginBottom='spacingS'>Connected to VWO Successfully!</Heading>
+              <Note variant='positive' marginBottom='spacingL'>Account ID: {this.state.config.accountId} is now connected to VWO account. Add your content with different Variations and start experiments.</Note>
+              <Button variant='primary' as='a' href={`https://app.contentful.com/spaces/${this.props.sdk.ids.space}/apps/list/installed`}>Back to Apps</Button>
             </Flex>}
         </Flex>
       </React.Fragment>

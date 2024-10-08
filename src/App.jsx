@@ -57,7 +57,7 @@ const App = (props) => {
     const apiToken = props.sdk.parameters.installation.accessToken;
     const vwoAccountId = props.sdk.parameters.installation.accountId;
     const areCredentialsValid = await validateCredentials(vwoAccountId, apiToken);
-    if(areCredentialsValid.code === 200){
+    if(areCredentialsValid.code === 200 || areCredentialsValid.code === 429){
       const params = {
         authToken: apiToken,
         accountId: vwoAccountId,

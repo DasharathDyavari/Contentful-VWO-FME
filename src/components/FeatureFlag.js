@@ -115,7 +115,7 @@ function FeatureFlag(props) {
                </Grid.Item>
 
                <Grid.Item>
-                  <Text as="h4" fontWeight="fontWeightBold">Contentful ID:</Text>
+                  <Text as="h4" fontWeight="fontWeightBold">Featureflag ID:</Text>
                   <Paragraph>{featureFlag.id}</Paragraph>
                </Grid.Item>
 
