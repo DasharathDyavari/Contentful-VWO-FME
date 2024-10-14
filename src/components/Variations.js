@@ -1,9 +1,11 @@
-import { Flex, Button, Heading, Paragraph, Modal, Form, FormControl, TextInput, ModalControls, Tooltip } from '@contentful/f36-components';
+import { Flex, Button, Heading, List, MenuItem, Paragraph, Modal, Form, Menu, TextLink, FormControl, TextInput, ModalControls, Tooltip, Header, ButtonGroup } from '@contentful/f36-components';
 import { css } from 'emotion';
-import { PlusIcon } from '@contentful/f36-icons';
 import { mapVwoVariationsAndContent } from '../utils';
 import React, {useEffect, useState} from 'react';
 import VariationItem from './VariationItem';
+import tokens from '@contentful/f36-tokens';
+import CreateContent from './CreateContent';
+import AddVwoVariationModal from '../modalComponents/AddVwoVariationModal';
 
 const styles = {
    heading: css({
@@ -11,97 +13,91 @@ const styles = {
    }),
    container: css({
     width: '100%'
-   })
+   }),
+   DefaultVariationTile: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      border: '1px solid lightgrey',
+      borderRadius: '10px'
+   }),
+   menuList: css({
+    maxHeight: '200px'
+  }),
+  menuListHeader: css({
+    marginLeft: tokens.spacingS,
+    fontWeight: 'bold'
+  }),
+  variationsWithoutLength: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    marginBottom: tokens.spacingM
+  }),
+  variationsWithLength: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%'
+  })
 }
 
 function Variations(props) {
   const [newVariationModal, setNewVariationModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [variationName, setVariationName] = useState(`Variation-${props.vwoVariations.length}`);
-
-  const addVwoVariationModal = async (name) => {
-    if(name){
-      setLoading(true);
-      const isVariationAdded = await props.addNewVwoVariation(name);
-      if(isVariationAdded){
-        setVariationName('');
-        setNewVariationModal(false);
-      }
-      setLoading(false);
-    }
-    else{
-      setNewVariationModal(false);
-    }
-  }
-
-  const updateVwoVariationsName = (length) => {
-    setVariationName(`Variation-${length}`)
-  }
-
-  useEffect(() => {
-    updateVwoVariationsName(props.vwoVariations.length);
-  },[props.vwoVariations]);
 
   const mappedVariations = mapVwoVariationsAndContent(props.vwoVariations, props.entries, props.contentTypes, props.sdk.locales.default);
-  console.log('props: ',props)
-  const isDefaultVariationAdded = props.vwoVariations[0]?.jsonContent.length && props.vwoVariations[0].jsonContent[0].value;
+  const isDefaultVariationContentAdded = mappedVariations[0].variationContent;
+  console.log("hre: ",props)
   return (
     <React.Fragment>
-      <Modal onClose={() => addVwoVariationModal('')} isShown={newVariationModal} size='medium'>
-      {() => (
-         <>
-            <Modal.Header
-               title="Create new VWO Variation"
-               onClose={() => addVwoVariationModal('')}
-            />
-            <Modal.Content>
-               <Form onSubmit={() => addVwoVariationModal(variationName)}>
-                  <FormControl className={styles.fieldItem}>
-                     <FormControl.Label isRequired>Variation name</FormControl.Label>
-                     <TextInput
-                        value={variationName}
-                        onChange={(e) => setVariationName(e.target.value)}/>
-                  </FormControl>
-               </Form>
-            </Modal.Content>
-            <ModalControls>
-              <Button
-                size="small"
-                variant="transparent"
-                onClick={() => addVwoVariationModal('')}
-              >
-               Close
-              </Button>
-              <Button
-                size="small"
-                variant="positive"
-                isLoading={loading}
-                onClick={() => addVwoVariationModal(variationName)}
-              >
-               Add
-              </Button>
-            </ModalControls>
-         </>
-         )}
-      </Modal>
-      <Heading element='h2' className={styles.heading}>Variations:</Heading>
-      <Paragraph>Content created in this feature flag is available only for this feature flag</Paragraph>
-      <Flex flexDirection='column' justifyContent='center' marginLeft='spacingM' marginTop='spacingL' marginBottom='spacingXl' gap='spacingXl' className={styles.container}>
-        {mappedVariations.map(variation => {
-            return <VariationItem
-              sdk={props.sdk}
-              variation={variation}
-              isDefaultVariationAdded={isDefaultVariationAdded}
-              linkExistingEntry={props.linkExistingEntry}
-              contentTypes={props.contentTypes}
-              onCreateVariationEntry={props.onCreateVariationEntry}
-              updateVwoVariationContent={props.updateVwoVariationContent}
-              key={variation.vwoVariation.id}/>
-        })}
-      </Flex>
-      <Tooltip placement="top" id="tooltip-1" content="Add content to default variation in order to add more variations" isDisabled={isDefaultVariationAdded}>
-        <Button variant='primary' size='small' startIcon={<PlusIcon />} onClick={() => setNewVariationModal(true)} isDisabled={!isDefaultVariationAdded}>Add Variation</Button>
-      </Tooltip>
+      {/* Add Vwo Variation modal */}
+      <AddVwoVariationModal
+        addNewVwoVariation={props.addNewVwoVariation}
+        setNewVariationModal={setNewVariationModal}
+        vwoVariationsLength={props.vwoVariations.length}
+        newVariationModal={newVariationModal}/>
+
+      {/* Default variation block */}
+      <div className={styles.DefaultVariationTile} style={{padding: mappedVariations[0].variationContent? '20px': '40px', marginBottom: '40px'}}>
+         <Heading style={{marginBottom: '5px', alignSelf: mappedVariations[0].variationContent? 'flex-start': 'auto'}}>Default (control) variation</Heading>
+         <Paragraph style={{marginBottom: '20px', alignSelf: mappedVariations[0].variationContent? 'flex-start': 'auto'}}>Wrapper & it’s entries associated with the default variation will be displayed here.</Paragraph>
+         <CreateContent
+          sdk={props.sdk}
+          variation={mappedVariations[0]}
+          contentTypes={props.contentTypes}
+          linkExistingEntry={props.linkExistingEntry}
+          updateVwoVariationContent={props.updateVwoVariationContent}/>
+      </div>
+
+      {/* Other variations block */}
+      {isDefaultVariationContentAdded && <div className={styles.DefaultVariationTile} style={{padding: (mappedVariations.length > 1)? '20px': '40px'}}>
+         <div className={mappedVariations.length > 1? styles.variationsWithLength: styles.variationsWithoutLength}>
+            <div style={{marginBottom: '5px', display: 'flex', justifyContent: 'center', flexDirection:'column', alignItems: (mappedVariations.length > 1)? 'flex-start': 'center'}}>
+              <Heading style={{marginBottom: '5px'}}>Other variation</Heading>
+              <Paragraph style={{marginBottom: '20px'}}>Others Wrapper & it’s entries will be displayed here.</Paragraph>
+            </div>
+            <Button variant='primary' size='small' onClick={() => setNewVariationModal(true)}>Add Variation</Button>
+         </div>
+         {mappedVariations.length > 1 && <List style={{width: '100%', listStyle: 'none', padding: '0px'}}>
+          {mappedVariations.slice(1).map((variation,index) => {
+            return <List.Item key={variation.vwoVariation.id}>
+              <VariationItem
+                index={index+1}
+                sdk={props.sdk}
+                variation={variation}
+                linkExistingEntry={props.linkExistingEntry}
+                contentTypes={props.contentTypes}
+                updateVwoVariationName={props.updateVwoVariationName}
+                onCreateVariationEntry={props.onCreateVariationEntry}
+                updateVwoVariationContent={props.updateVwoVariationContent}
+                key={variation.vwoVariation.id}/>
+            </List.Item>
+          })}
+         </List>
+        }
+      </div>}
     </React.Fragment>
   )
 }

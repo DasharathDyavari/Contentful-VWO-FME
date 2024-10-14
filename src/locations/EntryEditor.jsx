@@ -4,7 +4,7 @@ import useMethods from 'use-methods';
 import { css } from 'emotion';
 import StatusBar from '../components/StatusBar';
 import SectionSplitter from '../components/SectionSplitter';
-import FeatureFlag from '../components/FeatureFlag';
+import CreateFeatureFlag from '../components/CreateFeatureFlag';
 import tokens from '@contentful/f36-tokens';
 import Variations from '../components/Variations';
 
@@ -74,6 +74,7 @@ const fetchInitialData = async (props) => {
   let vwoVariations = [];
   if(featureFlag?.id){
     const resp = await props.client.getFeatureFlagById(featureFlag.id);
+
     if(resp && resp._data?.variations){
       vwoVariations = resp._data.variations;
     } else {
@@ -97,7 +98,6 @@ const fetchInitialData = async (props) => {
 const getNewVariation = (variationName, vwoVariationsLength) => {
   let newVariation = {
     name: variationName,
-    id: vwoVariationsLength+1,
     key: (vwoVariationsLength+1).toString(),
     jsonContent: vwoVariationsLength? [{variableId: 1, value: ''}]: []
   };
@@ -138,6 +138,26 @@ const EntryEditor = (props) => {
       else{
         reject('Something went wrong while updating Feature flag details. Please try again');
       }
+    });
+  }
+
+  const updateVwoVariationName = async (vwoVariation, variationName) => {
+    const updatedVwoVariations = state.vwoVariations.map(variation => {
+      if(variation.id === vwoVariation.id){
+        variation.name = variationName;
+      }
+      return variation;
+    });
+
+    return updateVariationsInVwo(updatedVwoVariations)
+    .then(variations => {
+      actions.setVwoVariations(variations);
+      props.sdk.notifier.success('VWO Variation name updated successfully');
+      return true;
+    })
+    .catch(err => {
+      props.sdk.notifier.error(err);
+      return false;
     });
   }
 
@@ -216,6 +236,9 @@ const EntryEditor = (props) => {
       else if(resp && resp._errors?.length){
         props.sdk.notifier.error(resp._errors[0].message);
       }
+      else{
+        props.sdk.notifier.error('Something went wrong. Please try again');
+      }
     }
   });
 
@@ -289,7 +312,7 @@ const EntryEditor = (props) => {
         actions.setError('Unable to load initial data');
       })
       .finally(() => {
-        actions.setLoading(false);
+        actions.setLoading(!props.client);
       });
   }, [props.client]);
 
@@ -311,27 +334,23 @@ const EntryEditor = (props) => {
     props.sdk.entry.fields.variations
   ])
 
-  const isFeatureFlagCreated = state.featureFlag?.featureKey;
-
+  const isFeatureFlagCreated = state.featureFlag?.id;
   return (
     <React.Fragment>
       <GlobalStateContext.Provider value={globalState}>
         <div className={styles.editor}>
-          <StatusBar currentStep={state.currentStep}/>
-          <SectionSplitter />
+          {/* <StatusBar currentStep={state.currentStep}/>
+          <SectionSplitter /> */}
           {state.loading && <Skeleton.Container>
             <Skeleton.BodyText numberOfLines={10} />
           </Skeleton.Container>}
-          {!state.loading && 
-            <FeatureFlag
-              sdk={props.sdk}
-              featureFlag={state.featureFlag}
-              updateFeatureFlagDetails={updateFeatureFlagDetails}
-              onFeatureFlagCreation={createFeatureFlag}/>}
-          {isFeatureFlagCreated && !state.loading && <SectionSplitter />}
+          {!state.loading && !isFeatureFlagCreated && 
+            <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
+          {/* {isFeatureFlagCreated && !state.loading && <SectionSplitter />} */}
           {isFeatureFlagCreated && !state.loading && 
             <Variations
               sdk={props.sdk}
+              updateVwoVariationName={updateVwoVariationName}
               addNewVwoVariation={addNewVwoVariation}
               contentTypes={state.contentTypes}
               vwoVariations={state.vwoVariations}

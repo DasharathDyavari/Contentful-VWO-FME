@@ -18,7 +18,7 @@ export const getEntryStatus = sys => {
   if(!apiToken || !accountId){
     return false;
   }
-  let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${accountId}/smartcode`;
+  let url = `https://app.vwo.com/api/v2/accounts/${accountId}/smartcode`;
   const response = await fetch(url,{
     method: 'GET',
     headers: {

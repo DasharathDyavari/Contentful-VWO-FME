@@ -7,12 +7,12 @@ export default class VwoClient {
       this.accountId = params.accountId;
       this.accessToken = params.authToken;
       this.featureId = '';
-      this.baseUrl = 'https://vwotestapp7.vwo.com/api/v2';
+      this.baseUrl = 'https://app.vwo.com/api/v2';
       this.onReauth = params.onReauth;
    }
 
    createFeatureFlag = async (featureFlag) => {
-      let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${this.accountId}/features`;
+      let url = `https://app.vwo.com/api/v2/accounts/${this.accountId}/features`;
       const response = await fetch(url,{
          method: 'POST',
          body: JSON.stringify(featureFlag),
@@ -38,7 +38,7 @@ export default class VwoClient {
       if(!this.featureId){
          this.featureId = featureId;
       }
-      let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
+      let url = `https://app.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
       const response = await fetch(url,{
          method: 'GET',
          headers: {
@@ -48,6 +48,10 @@ export default class VwoClient {
       });
 
       if(response){
+         console.log("response: ",response)
+         if(response.status === 429){
+            return this.getFeatureFlagById(featureId);
+         }
          return await response.json();
       }
 
@@ -58,7 +62,7 @@ export default class VwoClient {
    }
 
    updateFeatureFlag = async (featureFlag) => {
-      let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
+      let url = `https://app.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
       const response = await fetch(url,{
          method: 'PATCH',
          body: JSON.stringify(featureFlag),
@@ -79,7 +83,7 @@ export default class VwoClient {
    }
 
    updateVariations = async (variations) => {
-      let url = `https://vwotestapp7.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
+      let url = `https://app.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
       const response = await fetch(url,{
          method: 'PATCH',
          body: JSON.stringify(variations),

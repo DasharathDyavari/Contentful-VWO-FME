@@ -187,7 +187,6 @@ const App = (props) => {
       }
     }
   };
-
   return Component() ? Component() : null;
 };
 

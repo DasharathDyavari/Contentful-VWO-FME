@@ -282,7 +282,6 @@ export default class ConfigScreen extends React.Component {
     ]);
 
     const enabledContentTypes = this.findEnabledContentTypes(allContentTypes);
-    console.log('enabled content types: ',enabledContentTypes, await this.props.sdk.app.isInstalled());
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState(
       (prevState) => {

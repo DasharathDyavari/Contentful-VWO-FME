@@ -1,5 +1,5 @@
 import React from 'react';
-import { EntryCard, Menu, MenuItem, Stack, TextLink } from '@contentful/f36-components';
+import { EntryCard, Menu, MenuItem, ButtonGroup, Button } from '@contentful/f36-components';
 import { PlusIcon } from '@contentful/f36-icons';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
@@ -46,33 +46,24 @@ function CreateContent(props) {
    const isContentAdded = props.variation.variationContent;
    return (
       <React.Fragment>
-         {!isContentAdded && <Stack alignItems='start' flexDirection='column' spacing='spacingXs' className={styles.container}>
-            <Menu>
-               <Menu.Trigger>
-                  <TextLink
-                     as="button"
-                     variant="primary"
-                     icon={<PlusIcon />}
-                     alignIcon="start"
-                     className={styles.item}
-                     >Create entry and link</TextLink>
-               </Menu.Trigger>
-               <Menu.List className={styles.menuList}>
+         {!isContentAdded && <ButtonGroup variant='spaced'>
+          <Menu>
+                <Menu.Trigger>
+                  <Button variant="secondary" size="small">
+                    Create entry and link
+                  </Button>
+                </Menu.Trigger>
+                <Menu.List className={styles.menuList}>
                   <Menu.ListHeader className={styles.menuListHeader}>Select content type</Menu.ListHeader>
                   {props.contentTypes.map(contentType => {
-                     return <Menu.Item key={contentType.sys.id} onClick={() => props.onCreateVariationEntry(props.variation.vwoVariation, contentType)}>{contentType.name}</Menu.Item>
+                      return <Menu.Item key={contentType.sys.id} onClick={() => props.onCreateVariationEntry(props.variation.vwoVariation, contentType)}>{contentType.name}</Menu.Item>
                   })}
-               </Menu.List>
+                </Menu.List>
             </Menu>
-            <TextLink
-               as="button"
-               variant="primary"
-               icon={<PlusIcon />}
-               alignIcon="start"
-               onClick={() => props.linkExistingEntry(props.variation.vwoVariation)}
-               className={styles.item}
-               >Link an existing entry</TextLink>
-         </Stack>}
+            <Button variant="secondary" size="small" onClick={() => props.linkExistingEntry(props.variation.vwoVariation)}>
+              Link an existing entry
+            </Button>
+         </ButtonGroup>}
          {isContentAdded && <EntryCard 
             status={props.variation.variationContent.status}
             contentType={props.variation.variationContent.contentType}
