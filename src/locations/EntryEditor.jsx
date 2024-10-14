@@ -19,6 +19,7 @@ const styles = {
 const methods = state => {
   return {
     setInitialData({featureFlag, contentTypes, variations, entries, vwoVariations }){
+      vwoVariations.sort((a,b) => b.id-a.id);
       state.featureFlag = featureFlag;
       state.variations = variations;
       state.contentTypes = contentTypes;
@@ -38,6 +39,7 @@ const methods = state => {
       state.entries = entries;
     },
     setVwoVariations(variations){
+
       state.vwoVariations = variations;
     },
     setError(message){
@@ -151,6 +153,7 @@ const EntryEditor = (props) => {
 
     return updateVariationsInVwo(updatedVwoVariations)
     .then(variations => {
+      variations.sort((a,b) => b.id-a.id);
       actions.setVwoVariations(variations);
       props.sdk.notifier.success('VWO Variation name updated successfully');
       return true;
@@ -167,6 +170,7 @@ const EntryEditor = (props) => {
 
     return updateVariationsInVwo(updatedVwoVariations)
     .then(variations => {
+      variations.sort((a,b) => b.id-a.id);
       actions.setVwoVariations(variations);
       props.sdk.notifier.success('VWO Variation added successfully');
       return true;
@@ -190,7 +194,9 @@ const EntryEditor = (props) => {
       .then(updatedFeatureFlag => {
         actions.setFeatureFlag(updatedFeatureFlag);
         props.sdk.entry.fields.featureFlag.setValue(updatedFeatureFlag);
-        actions.setVwoVariations(updatedFeatureFlag.variations);
+        const variations = updatedFeatureFlag.variations;
+        variations.sort((a,b) => b.id-a.id);
+        actions.setVwoVariations(variations);
         if(updateEntries){
           props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
         }
@@ -210,6 +216,7 @@ const EntryEditor = (props) => {
   
       updateVariationsInVwo(updatedVwoVariations)
       .then(variations => {
+        variations.sort((a,b) => b.id-a.id);
         actions.setVwoVariations(variations);
         if(updateEntries){
           props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));

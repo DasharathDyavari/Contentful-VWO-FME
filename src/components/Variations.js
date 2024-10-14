@@ -48,8 +48,8 @@ function Variations(props) {
   const [newVariationModal, setNewVariationModal] = useState(false);
 
   const mappedVariations = mapVwoVariationsAndContent(props.vwoVariations, props.entries, props.contentTypes, props.sdk.locales.default);
-  const isDefaultVariationContentAdded = mappedVariations[0].variationContent;
-  console.log("hre: ",props)
+  const defaultVariation = mappedVariations.filter(variation => variation.vwoVariation.id === 1)[0];
+  const isDefaultVariationContentAdded = defaultVariation?.variationContent;
   return (
     <React.Fragment>
       {/* Add Vwo Variation modal */}
@@ -60,12 +60,12 @@ function Variations(props) {
         newVariationModal={newVariationModal}/>
 
       {/* Default variation block */}
-      <div className={styles.DefaultVariationTile} style={{padding: mappedVariations[0].variationContent? '20px': '40px', marginBottom: '40px'}}>
-         <Heading style={{marginBottom: '5px', alignSelf: mappedVariations[0].variationContent? 'flex-start': 'auto'}}>Default (control) variation</Heading>
-         <Paragraph style={{marginBottom: '20px', alignSelf: mappedVariations[0].variationContent? 'flex-start': 'auto'}}>Wrapper & it’s entries associated with the default variation will be displayed here.</Paragraph>
+      <div className={styles.DefaultVariationTile} style={{padding: defaultVariation.variationContent? '20px': '40px', marginBottom: '40px'}}>
+         <Heading style={{marginBottom: '5px', alignSelf: defaultVariation.variationContent? 'flex-start': 'auto'}}>Default (control) variation</Heading>
+         <Paragraph style={{marginBottom: '20px', alignSelf: defaultVariation.variationContent? 'flex-start': 'auto'}}>Wrapper & it’s entries associated with the default variation will be displayed here.</Paragraph>
          <CreateContent
           sdk={props.sdk}
-          variation={mappedVariations[0]}
+          variation={defaultVariation}
           contentTypes={props.contentTypes}
           linkExistingEntry={props.linkExistingEntry}
           updateVwoVariationContent={props.updateVwoVariationContent}/>
@@ -81,7 +81,7 @@ function Variations(props) {
             <Button variant='primary' size='small' onClick={() => setNewVariationModal(true)}>Add Variation</Button>
          </div>
          {mappedVariations.length > 1 && <List style={{width: '100%', listStyle: 'none', padding: '0px'}}>
-          {mappedVariations.slice(1).map((variation,index) => {
+          {mappedVariations.filter(variation => variation.vwoVariation.id !== 1).map((variation,index) => {
             return <List.Item key={variation.vwoVariation.id}>
               <VariationItem
                 index={index+1}

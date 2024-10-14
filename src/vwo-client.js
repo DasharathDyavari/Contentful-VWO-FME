@@ -48,7 +48,6 @@ export default class VwoClient {
       });
 
       if(response){
-         console.log("response: ",response)
          if(response.status === 429){
             return this.getFeatureFlagById(featureId);
          }
