@@ -38,7 +38,19 @@ const styles = {
   sectionHeading: css({
     marginTop: tokens.spacingL,
     marginBottom: tokens.spacingM
-  })
+  }),
+  tableContainer: css({
+      maxHeight: '300px',
+      overflowY: 'auto',
+      border: `1px solid ${tokens.gray300}`,
+      borderRadius: tokens.borderRadiusSmall,
+   }),
+   stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      backgroundColor: tokens.colorWhite,
+      zIndex: 1,
+   }),
 };
 
 ContentTypes.propTypes = {
@@ -54,7 +66,6 @@ export default function ContentTypes({
   allReferenceFields,
   onEdit
 }) {
-   console.log("here: ",allReferenceFields)
   return (
     <>
       <Flex flexDirection='column' marginBottom='spacingS'>
@@ -68,26 +79,28 @@ export default function ContentTypes({
           Add content type
         </Button> */}
         {addedContentTypes.length > 0 ? (
-          <Table className={styles.table}>
-            <Table.Head>
-               <Table.Row>
-                  <Table.Cell>Content name</Table.Cell>
-                  <Table.Cell>Field name</Table.Cell>
-                  <Table.Cell>Action</Table.Cell>
-               </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {addedContentTypes.map(id => (
-                <ContentTypeRow
-                  key={id}
-                  contentTypeId={id}
-                  allContentTypes={allContentTypes}
-                  allReferenceFields={allReferenceFields}
-                  onEdit={onEdit}
-                />
-              ))}
-            </Table.Body>
-          </Table>
+          <div className={styles.tableContainer}>
+            <Table className={styles.table}>
+               <Table.Head>
+                  <Table.Row>
+                  <Table.Cell className={styles.stickyHeader}>Content name</Table.Cell>
+                  <Table.Cell className={styles.stickyHeader}>Field name</Table.Cell>
+                  <Table.Cell className={styles.stickyHeader}>Action</Table.Cell>
+                  </Table.Row>
+               </Table.Head>
+               <Table.Body>
+               {addedContentTypes.map(id => (
+                  <ContentTypeRow
+                     key={id}
+                     contentTypeId={id}
+                     allContentTypes={allContentTypes}
+                     allReferenceFields={allReferenceFields}
+                     onEdit={onEdit}
+                  />
+               ))}
+               </Table.Body>
+            </Table>
+          </div>
         ) : null}
       </Flex>
     </>

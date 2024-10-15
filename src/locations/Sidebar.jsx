@@ -20,7 +20,7 @@ const styles = {
 };
 
 const Sidebar = (props) => {
-  const [featureFlag, setFeatureFlag] = useState(props.sdk.entry.fields.featureFlag.getValue());
+  const [featureFlag, setFeatureFlag] = useState(props.sdk.entry.fields.featureFlag.getValue() || {});
   const [nameEditing, setNameEditing] = useState(false);
   const [descriptionEditing, setDescriptionEditing] = useState(false);
   const [name, setName] = useState('');
@@ -29,9 +29,11 @@ const Sidebar = (props) => {
 
   const resetFeatureFlagValue = () => {
     const featureFlag = props.sdk.entry.fields.featureFlag.getValue();
-    setFeatureFlag(featureFlag);
-    setName(featureFlag.name || '');
-    setDescription(featureFlag.description || '');
+    if(featureFlag){
+      setFeatureFlag(featureFlag);
+      setName(featureFlag.name || '');
+      setDescription(featureFlag.description || '');
+    }
   }
 
   const updateFeatureFlagDetails = async (updatedFeatureFlag) => {
@@ -95,6 +97,8 @@ const Sidebar = (props) => {
     resetFeatureFlagValue();
   },[props.sdk.entry.fields.featureFlag]);
 
+  const isFeatureFlagAdded = !!featureFlag?.id;
+
   return <React.Fragment>
       {/* Feature flag details */}
       <Flex flexDirection='column' marginBottom='spacingM'>
@@ -112,13 +116,14 @@ const Sidebar = (props) => {
             ): (
               <IconButton
                 icon={<EditIcon />}
+                isDisabled={!isFeatureFlagAdded}
                 aria-label="Edit"
                 size="tiny"
                 variant="secondary"
                 onClick={() => setNameEditing(true)}/>
             )}
           </Flex>
-          {nameEditing? (<Flex alignItems="center" spacing="spacingXs">
+          {nameEditing && isFeatureFlagAdded? (<Flex alignItems="center" spacing="spacingXs">
             <TextInput
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -148,12 +153,13 @@ const Sidebar = (props) => {
               <IconButton
                 icon={<EditIcon />}
                 aria-label="Edit"
+                isDisabled={!isFeatureFlagAdded}
                 size="tiny"
                 variant="secondary"
                 onClick={() => setDescriptionEditing(true)}/>
             )}
           </Flex>
-          {descriptionEditing? (<Flex alignItems="center" spacing="spacingXs">
+          {descriptionEditing && isFeatureFlagAdded? (<Flex alignItems="center" spacing="spacingXs">
             <TextInput
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -177,7 +183,7 @@ const Sidebar = (props) => {
         </Button>
         <Button
           className={styles.button}
-          isDisabled={!featureFlag?.id}
+          isDisabled={!isFeatureFlagAdded}
           href={`https://app.vwo.com/#/full-stack/feature-flag/${featureFlag?.id}/edit/variables`}
           as={featureFlag?.id? 'a': 'button'}
           target="_blank">

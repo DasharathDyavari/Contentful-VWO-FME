@@ -311,6 +311,10 @@ export default class ConfigScreen extends React.Component {
     );
 
     app.onConfigure(this.onConfigure);
+    app.onConfigurationCompleted(async () => {
+      const isInstalled = await app.isInstalled();
+      this.setState({ isInstalled: isInstalled });
+    });
   }
 
   onApiKeyChange = (value) => {
@@ -365,7 +369,8 @@ export default class ConfigScreen extends React.Component {
   
   render(){
     const { isInstalled } = this.state;
-    console.log("here: ",this.props, this.state)
+    const tokenLength = this.state.config.accessToken.length;
+    const accessToken = tokenLength > 4? '*'.repeat(tokenLength-4)+this.state.config.accessToken.slice(tokenLength-4): '';
     return (
       <React.Fragment>
         <Flex className={styles.background}>
@@ -411,11 +416,15 @@ export default class ConfigScreen extends React.Component {
                   <FormControl.Label>Account ID</FormControl.Label>
                   <Text>{this.state.config.accountId}</Text>
               </Flex>
-              <ContentTypes 
+              <Flex flexDirection='column' marginBottom='spacingXl'>
+                  <FormControl.Label>API Key</FormControl.Label>
+                  <Text>{accessToken}</Text>
+              </Flex>
+              {/* <ContentTypes 
               addedContentTypes={Object.keys(this.state.config.contentTypes)}
               allContentTypes={this.state.allContentTypes}
               allReferenceFields={this.state.config.contentTypes}
-              onEdit={this.onEdit}/>
+              onEdit={this.onEdit}/> */}
             </Flex>
             }
         </Flex>

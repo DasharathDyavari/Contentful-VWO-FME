@@ -338,8 +338,7 @@ const EntryEditor = (props) => {
     actions,
     props.sdk.entry.fields.meta,
     props.sdk.entry.fields.variations
-  ])
-
+  ]);
   const isFeatureFlagCreated = state.featureFlag?.id;
   return (
     <React.Fragment>
