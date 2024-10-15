@@ -102,14 +102,14 @@ const Sidebar = (props) => {
   return <React.Fragment>
       {/* Feature flag details */}
       <Flex flexDirection='column' marginBottom='spacingM'>
-          <Flex alignItems='center' justifyContent='space-between'>
+          <Flex alignItems='center' justifyContent='space-between' marginBottom='spacingXs'>
             <Text>Name:</Text>
             {nameEditing? (
-              <ButtonGroup variant='spaced'>
-                <Button variant="positive" size="small" onClick={handleSaveClick} isLoading={loading}>
+              <ButtonGroup variant='spaced' spacing='spacingXs'>
+                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
                   Save
                 </Button>
-                <Button variant="negative" size="small" onClick={handleDiscard}>
+                <Button variant="negative" size="tiny" onClick={handleDiscard}>
                   Discard
                 </Button>
               </ButtonGroup>
@@ -138,14 +138,14 @@ const Sidebar = (props) => {
       </Flex>
 
       <Flex flexDirection='column' marginBottom='spacingXs'>
-          <Flex alignItems='center' justifyContent='space-between'>
+          <Flex alignItems='center' justifyContent='space-between'  marginBottom='spacingXs'>
             <Text>Description:</Text>
             {descriptionEditing? (
-              <ButtonGroup variant='spaced'>
-                <Button variant="positive" size="small" onClick={handleSaveClick} isLoading={loading}>
+              <ButtonGroup variant='spaced' spacing='spacingXs'>
+                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
                   Save
                 </Button>
-                <Button variant="negative" size="small" onClick={handleDiscard}>
+                <Button variant="negative" size="tiny" onClick={handleDiscard}>
                   Discard
                 </Button>
               </ButtonGroup>

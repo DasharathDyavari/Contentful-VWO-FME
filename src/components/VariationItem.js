@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { css } from 'emotion';
-import { Paragraph, Flex, Stack, ButtonGroup, TextInput, IconButton, Button } from '@contentful/f36-components';
+import { Paragraph, Flex, Stack, ButtonGroup, TextInput, Text, IconButton, Button } from '@contentful/f36-components';
 import CreateContent from './CreateContent';
 import tokens from '@contentful/f36-tokens';
 import { EditIcon, DoneIcon } from '@contentful/f36-icons';
@@ -54,14 +54,14 @@ function VariationItem(props) {
   return (
     <React.Fragment>
       <div className={styles.variationContainer}>
-        <Flex alignItems="center" marginBottom={tokens.spacingXs}>
+        <Flex alignItems="center" marginBottom='spacingXs'>
           {!isEditing ? (
             <Stack flexDirection="row" alignItems="center" spacing="spacingXs">
-              <Paragraph>{`${props.index}_${name}`}</Paragraph>
+              <Text>{`${props.index}_${name}`}</Text>
               <IconButton
                 icon={<EditIcon />}
                 aria-label="Edit"
-                size="small"
+                size="tiny"
                 variant="secondary"
                 onClick={() => setIsEditing(true)}
               />
@@ -69,17 +69,18 @@ function VariationItem(props) {
           ) : (
             <Flex alignItems="center" spacing="spacingXs">
               <TextInput
+                style={{marginRight: '10px'}}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyPress={handleKeyPress}
                 size='small'
                 autoFocus
               />
-              <ButtonGroup variant='spaced'>
-                <Button variant="positive" size="small" onClick={handleSaveClick} isLoading={loading}>
+              <ButtonGroup variant='spaced' spacing='spacingXs'>
+                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
                   Save
                 </Button>
-                <Button variant="negative" size="small" onClick={handleDiscard}>
+                <Button variant="negative" size="tiny" onClick={handleDiscard}>
                   Discard
                 </Button>
               </ButtonGroup>
