@@ -61,6 +61,7 @@ export default class VwoClient {
    }
 
    updateFeatureFlag = async (featureFlag) => {
+      this.featureId = this.featureId || featureFlag.id;
       let url = `https://app.vwo.com/api/v2/accounts/${this.accountId}/features/${this.featureId}`;
       const response = await fetch(url,{
          method: 'PATCH',

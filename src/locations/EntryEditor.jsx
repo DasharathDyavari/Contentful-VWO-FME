@@ -1,12 +1,11 @@
 import React, {useEffect, useCallback} from 'react';
-import { Skeleton } from '@contentful/f36-components';
+import { Skeleton, Modal, Stack, Text, Paragraph } from '@contentful/f36-components';
 import useMethods from 'use-methods';
 import { css } from 'emotion';
-import StatusBar from '../components/StatusBar';
-import SectionSplitter from '../components/SectionSplitter';
 import CreateFeatureFlag from '../components/CreateFeatureFlag';
 import tokens from '@contentful/f36-tokens';
 import Variations from '../components/Variations';
+import FeatureFlagDetailsModal from '../modalComponents/FeatureFlagDetailsModal';
 
 const GlobalStateContext = React.createContext(null);
 
@@ -346,14 +345,12 @@ const EntryEditor = (props) => {
     <React.Fragment>
       <GlobalStateContext.Provider value={globalState}>
         <div className={styles.editor}>
-          {/* <StatusBar currentStep={state.currentStep}/>
-          <SectionSplitter /> */}
           {state.loading && <Skeleton.Container>
             <Skeleton.BodyText numberOfLines={10} />
           </Skeleton.Container>}
+          {props.featureFlagModal && <FeatureFlagDetailsModal onClose={props.hideFeatureFlagDetails} featureFlag={state.featureFlag}/>}
           {!state.loading && !isFeatureFlagCreated && 
             <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
-          {/* {isFeatureFlagCreated && !state.loading && <SectionSplitter />} */}
           {isFeatureFlagCreated && !state.loading && 
             <Variations
               sdk={props.sdk}

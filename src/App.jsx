@@ -10,9 +10,10 @@ import tokens from '@contentful/f36-tokens';
 import ConnectButton from './ConnectButton';
 import Page from './locations/Page';
 import Home from './locations/Home';
-import { Modal, Flex, Heading, Paragraph, FormControl, TextInput, TextLink } from '@contentful/f36-components';
+import { Modal, Flex, Heading, Paragraph, FormControl, Button, Text, TextInput, TextLink } from '@contentful/f36-components';
 import { css } from 'emotion';
 import { validateCredentials } from './utils';
+import FeatureFlagDetailsModal from './modalComponents/FeatureFlagDetailsModal';
 
 // 7003181: 80bae31b9131d2cbe8c16234f9eaf33499acf4460635ed76bb3cb248bc9f2461
 // 7003181: 1b16c317a033a5001b5eed0055920f0022bd90f7978b4cb30f295d2e50a16f32
@@ -46,6 +47,7 @@ const App = (props) => {
   }
 
   const [loading, setLoading] = useState(false);
+  const [featureFlagModal, setFeatureFlagModal] = useState(false);
   const [state,setState] = useState({
     client: null,
     accessToken: props.sdk.parameters.installation.accessToken || '',
@@ -126,6 +128,16 @@ const App = (props) => {
     setState(newState);
   }
 
+  const openModal = () => {
+    console.log('opening modal')
+    setFeatureFlagModal(true);
+  }
+
+  const closeModal = () => {
+    console.log('closing modal')
+    setFeatureFlagModal(false);
+  }
+
   useEffect(() => {
     validateUserCredentials(props);
   },[]);
@@ -153,41 +165,36 @@ const App = (props) => {
     </Modal>
   }
 
-  const Component = () => {
-    for (const [location] of Object.entries(ComponentLocationSettings)) {
-      if (props.sdk.location.is(location)) {
-        switch(location){
-          case locations.LOCATION_APP_CONFIG:
-            return (
-              <ConfigScreen
-                openAuth={openAuth}
-                accessToken={state.accessToken}
-                accountId={state.accountId}
-                updateCredentials={updateCredentials}
-                sdk={props.sdk}
-                client={state.client}
-              />
-            );
-          case locations.LOCATION_DIALOG:
-            return (<Dialog />);
-          case locations.LOCATION_ENTRY_FIELD:
-            return (<Field />);
-          case locations.LOCATION_ENTRY_EDITOR:
-            return <EntryEditor
-                sdk={props.sdk}
-                client={state.client}
-                openAuth={openAuth}/>;
-          case locations.LOCATION_ENTRY_SIDEBAR:
-            return (<Sidebar sdk={props.sdk}/>)
-          case locations.LOCATION_PAGE:
-            return (<Page />)
-          case locations.LOCATION_HOME:
-            return (<Home />)
-        }
-      }
-    }
-  };
-  return Component() ? Component() : null;
+  // Perform conditional rendering based on location
+  if (props.sdk.location.is(locations.LOCATION_ENTRY_EDITOR)) {
+    return (
+      <EntryEditor
+        sdk={props.sdk}
+        client={state.client}
+        hideFeatureFlagDetails={closeModal}
+        featureFlagModal={featureFlagModal}
+        openAuth={openAuth}
+      />
+    );
+  } else if (props.sdk.location.is(locations.LOCATION_ENTRY_SIDEBAR)) {
+    return <Sidebar sdk={props.sdk} client={state.client} showFeatureFlagDetails={openModal} />;
+  }
+
+  // Handle other locations here...
+  if (props.sdk.location.is(locations.LOCATION_APP_CONFIG)) {
+    return (
+      <ConfigScreen
+        openAuth={openAuth}
+        accessToken={state.accessToken}
+        accountId={state.accountId}
+        updateCredentials={updateCredentials}
+        sdk={props.sdk}
+        client={state.client}
+      />
+    );
+  }
+
+  return null;
 };
 
 export default App;

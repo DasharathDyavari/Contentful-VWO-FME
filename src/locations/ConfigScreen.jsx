@@ -1,9 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button, Icon, Stack } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
 import { ExternalLinkIcon, DoneIcon } from '@contentful/f36-icons';
 import { validateCredentials } from '../utils';
+import ContentTypes from '../components/ContentTypes';
 const VARIATION_CONTAINER_ID = 'variationFmeContainer';
 
 const styles = {
@@ -45,7 +46,7 @@ const styles = {
 export default class ConfigScreen extends React.Component {
   constructor(props){
     super(props);
-
+    this.appInstalled = false;
     this.state = {
       config: {
         accountId: props.accountId || '',
@@ -53,7 +54,8 @@ export default class ConfigScreen extends React.Component {
         contentTypes: {},
       },
       allContentTypes: [],
-      loading: false
+      loading: false,
+      isInstalled: false,
     }
   }
 
@@ -271,6 +273,10 @@ export default class ConfigScreen extends React.Component {
     };
   };
 
+  onEdit = (contentTypeId) => {
+
+  }
+
   async componentDidMount() {
     const { space, app } = this.props.sdk;
     const [
@@ -316,6 +322,17 @@ export default class ConfigScreen extends React.Component {
     this.setState(values);
   }
 
+  onAddContentType = contentTypeConfig => {
+    const { contentTypes } = this.state.config;
+
+    this.props.updateConfig({
+      contentTypes: {
+        ...contentTypes,
+        ...contentTypeConfig
+      }
+    });
+  };
+
   connectToVwo = async () => {
     if(!this.areAllInputsProvided()){
       return;
@@ -344,6 +361,7 @@ export default class ConfigScreen extends React.Component {
 
   
   render(){
+    const { isInstalled } = this.state;
     return (
       <React.Fragment>
         <Flex className={styles.background}>
@@ -370,19 +388,32 @@ export default class ConfigScreen extends React.Component {
                   <TextInput
                     value={this.state.config.accessToken}
                     onChange={(e) => this.onApiKeyChange(e.target.value)}/>
-                  <Paragraph marginTop='spacingS'>Locate auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
+                  <Paragraph marginTop='spacingS'><TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">View</TextLink> the auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
               </FormControl>
-              <Note marginBottom='spacingXl'>This token provides read-only (browse) access to organization-level information stored in VWO, accessible via API by any users in the current Contentful space.</Note>
+              <Note marginBottom='spacingXl'>This token grants read-only access to organization-level information stored in VWO. It is accessible via API by any users within the current Contentful space.</Note>
               <Button variant='primary' onClick={this.connectToVwo} isLoading={this.state.loading}>Connect with VWO</Button>
             </Flex>}
             {/* After connecting to VWO */}
-            {!!this.props.accessToken
+            {!!this.props.accessToken && !isInstalled
               && <Flex flexDirection='column' alignItems='start' className={styles.body}>
-              <Stack className={styles.doneIcon}><DoneIcon size='xlarge' variant='white'/></Stack>
-              <Heading marginBottom='spacingS'>Connected to VWO Successfully!</Heading>
-              <Note variant='positive' marginBottom='spacingL'>Account ID: {this.state.config.accountId} is now connected to VWO account. Add your content with different Variations and start experiments.</Note>
-              <Button variant='primary' as='a' href={`https://app.contentful.com/spaces/${this.props.sdk.ids.space}/apps/list/installed`}>Back to Apps</Button>
+              <Heading marginBottom='spacingXl'>Just one more step!</Heading>
+              <Note variant='warning' marginBottom='spacingL'>To complete setup, click 'Install' in the top-right corner and start using the VWO FME app.</Note>
             </Flex>}
+
+            {/* After installing the VWO */}
+            {isInstalled && this.props.accessToken && <Flex flexDirection='column' className={styles.body}>
+              <Heading marginBottom='spacingL'>Configuration</Heading>
+              <Flex flexDirection='column' marginBottom='spacingXl'>
+                  <FormControl.Label>Account ID</FormControl.Label>
+                  <Text>{this.state.config.accountId}</Text>
+              </Flex>
+              <ContentTypes 
+              addedContentTypes={Object.keys(this.state.config.contentTypes)}
+              allContentTypes={this.state.allContentTypes}
+              allReferenceFields={this.state.config.contentTypes}
+              onEdit={this.onEdit}/>
+            </Flex>
+            }
         </Flex>
       </React.Fragment>
     );
