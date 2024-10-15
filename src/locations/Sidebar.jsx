@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { Button, ButtonGroup, IconButton, Text, Flex, TextInput, Subheading } from '@contentful/f36-components';
+import { Button, ButtonGroup, IconButton, Text, Flex, TextLink, TextInput, Subheading } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
 import { EditIcon, DoneIcon } from '@contentful/f36-icons';
@@ -105,13 +105,17 @@ const Sidebar = (props) => {
           <Flex alignItems='center' justifyContent='space-between' marginBottom='spacingXs'>
             <Text>Name:</Text>
             {nameEditing? (
-              <ButtonGroup variant='spaced' spacing='spacingXs'>
-                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
-                  Save
-                </Button>
-                <Button variant="negative" size="tiny" onClick={handleDiscard}>
-                  Discard
-                </Button>
+              <ButtonGroup variant='spaced' spacing='spacingM'>
+                <TextLink
+                  isLoading={loading}
+                  as="button"
+                  variant="primary"
+                  onClick={handleSaveClick}>Save</TextLink>
+                <TextLink
+                  isLoading={loading}
+                  as="button"
+                  variant="secondary"
+                  onClick={handleDiscard}>Discard</TextLink>
               </ButtonGroup>
             ): (
               <IconButton
@@ -141,13 +145,17 @@ const Sidebar = (props) => {
           <Flex alignItems='center' justifyContent='space-between'  marginBottom='spacingXs'>
             <Text>Description:</Text>
             {descriptionEditing? (
-              <ButtonGroup variant='spaced' spacing='spacingXs'>
-                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
-                  Save
-                </Button>
-                <Button variant="negative" size="tiny" onClick={handleDiscard}>
-                  Discard
-                </Button>
+              <ButtonGroup variant='spaced' spacing='spacingM'>
+                <TextLink
+                  isLoading={loading}
+                  as="button"
+                  variant="primary"
+                  onClick={handleSaveClick}>Save</TextLink>
+                <TextLink
+                  isLoading={loading}
+                  as="button"
+                  variant="secondary"
+                  onClick={handleDiscard}>Discard</TextLink>
               </ButtonGroup>
             ): (
               <IconButton
@@ -172,7 +180,7 @@ const Sidebar = (props) => {
           <Text fontWeight='fontWeightDemiBold' fontSize="fontSizeM" className={styles.descriptionStyle} marginTop='spacing2Xs'>{description || '-'}</Text>
         )}
       </Flex>
-      {featureFlag?.id && <Button variant="transparent" onClick={props.showFeatureFlagDetails} style={{color: '#0059C8', marginTop: '0px'}}>Show all details</Button>}
+      {/* {featureFlag?.id && <Button variant="transparent" onClick={props.showFeatureFlagDetails} style={{color: '#0059C8', marginTop: '0px'}}>Show all details</Button>} */}
       <ButtonGroup variant='spaced' spacing='spacingM'>
         <Button
           as='a'

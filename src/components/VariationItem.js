@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { css } from 'emotion';
-import { Paragraph, Flex, Stack, ButtonGroup, TextInput, Text, IconButton, Button } from '@contentful/f36-components';
+import { Paragraph, Flex, Stack, ButtonGroup, TextInput, TextLink, Text, IconButton, Button } from '@contentful/f36-components';
 import CreateContent from './CreateContent';
 import tokens from '@contentful/f36-tokens';
 import { EditIcon, DoneIcon } from '@contentful/f36-icons';
@@ -69,20 +69,26 @@ function VariationItem(props) {
           ) : (
             <Flex alignItems="center" spacing="spacingXs">
               <TextInput
-                style={{marginRight: '10px'}}
+                style={{marginRight: '20px'}}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyPress={handleKeyPress}
                 size='small'
                 autoFocus
               />
-              <ButtonGroup variant='spaced' spacing='spacingXs'>
-                <Button variant="positive" size="tiny" onClick={handleSaveClick} isLoading={loading}>
-                  Save
-                </Button>
-                <Button variant="negative" size="tiny" onClick={handleDiscard}>
-                  Discard
-                </Button>
+              <ButtonGroup variant='spaced' spacing='spacingS'>
+                <TextLink
+                  isLoading={loading}
+                  as="button"
+                  style={{fontSize: '1rem'}}
+                  variant="primary"
+                  onClick={handleSaveClick}>Save</TextLink>
+                <TextLink
+                  isLoading={loading}
+                  style={{fontSize: '1rem'}}
+                  as="button"
+                  variant="secondary"
+                  onClick={handleDiscard}>Discard</TextLink>
               </ButtonGroup>
             </Flex>
           )}
