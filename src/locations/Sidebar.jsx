@@ -12,7 +12,7 @@ const styles = {
   descriptionStyle: css({
     display: '-webkit-box',
     WebkitBoxOrient: 'vertical',
-    WebkitLineClamp: 2, // Limit to 2 lines
+    WebkitLineClamp: 1, // Limit to 2 lines
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'normal', // Allows text wrapping within lines
@@ -102,7 +102,7 @@ const Sidebar = (props) => {
   return <React.Fragment>
       {/* Feature flag details */}
       <Flex flexDirection='column' marginBottom='spacingM'>
-          <Flex alignItems='center' justifyContent='space-between' marginBottom='spacingXs'>
+          <Flex alignItems='center' justifyContent='space-between' marginBottom={nameEditing? 'spacingXs': 'none'}>
             <Text>Name:</Text>
             {nameEditing? (
               <ButtonGroup variant='spaced' spacing='spacingM'>
@@ -142,7 +142,7 @@ const Sidebar = (props) => {
       </Flex>
 
       <Flex flexDirection='column' marginBottom='spacingXs'>
-          <Flex alignItems='center' justifyContent='space-between'  marginBottom='spacingXs'>
+          <Flex alignItems='center' justifyContent='space-between' marginBottom={descriptionEditing? 'spacingXs': 'none'}>
             <Text>Description:</Text>
             {descriptionEditing? (
               <ButtonGroup variant='spaced' spacing='spacingM'>

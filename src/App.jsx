@@ -15,10 +15,6 @@ import { css } from 'emotion';
 import { validateCredentials } from './utils';
 import FeatureFlagDetailsModal from './modalComponents/FeatureFlagDetailsModal';
 
-// 7003181: 80bae31b9131d2cbe8c16234f9eaf33499acf4460635ed76bb3cb248bc9f2461
-// 7003181: 1b16c317a033a5001b5eed0055920f0022bd90f7978b4cb30f295d2e50a16f32
-// 964346: 9264e2004f1f1728ca2edaded59c8be5e376c8f6dd8d448aec34c944f0c8ab6a
-
 const ComponentLocationSettings = {
   [locations.LOCATION_APP_CONFIG]: ConfigScreen,
   [locations.LOCATION_ENTRY_FIELD]: Field,
