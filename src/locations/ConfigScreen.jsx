@@ -287,6 +287,9 @@ export default class ConfigScreen extends React.Component {
       space.getContentTypes({ order: "name", limit: 1000 }),
     ]);
 
+    const isAppInstalled = await this.props.sdk.app.isInstalled();
+    this.setState({ isInstalled: isAppInstalled });
+
     const enabledContentTypes = this.findEnabledContentTypes(allContentTypes);
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState(
@@ -362,6 +365,7 @@ export default class ConfigScreen extends React.Component {
   
   render(){
     const { isInstalled } = this.state;
+    console.log("here: ",this.props, this.state)
     return (
       <React.Fragment>
         <Flex className={styles.background}>
