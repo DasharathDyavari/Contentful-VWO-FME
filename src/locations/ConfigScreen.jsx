@@ -5,6 +5,7 @@ import tokens from '@contentful/f36-tokens';
 import { ExternalLinkIcon, DoneIcon } from '@contentful/f36-icons';
 import { validateCredentials } from '../utils';
 import ContentTypes from '../components/ContentTypes';
+import Stepper from '../components/Stepper';
 const VARIATION_CONTAINER_ID = 'variationFmeContainer';
 
 const styles = {
@@ -55,7 +56,7 @@ export default class ConfigScreen extends React.Component {
       },
       allContentTypes: [],
       loading: false,
-      isInstalled: false,
+      isInstalled: false
     }
   }
 
@@ -273,10 +274,6 @@ export default class ConfigScreen extends React.Component {
     };
   };
 
-  onEdit = (contentTypeId) => {
-
-  }
-
   async componentDidMount() {
     const { space, app } = this.props.sdk;
     const [
@@ -313,7 +310,7 @@ export default class ConfigScreen extends React.Component {
     app.onConfigure(this.onConfigure);
     app.onConfigurationCompleted(async () => {
       const isInstalled = await app.isInstalled();
-      this.setState({ isInstalled: isInstalled });
+      this.setState({ isInstalled: isInstalled});
     });
   }
 
@@ -376,6 +373,7 @@ export default class ConfigScreen extends React.Component {
         <Flex className={styles.background}>
             {/* Before connecting to VWO */}
             {!this.props.accessToken && <Flex flexDirection='column' className={styles.body}>
+              <Stepper currentStep={1}/>
               <Flex alignItems='center' justifyContent='space-between' marginBottom='spacingL'>
                 <Heading marginBottom='none'>Configuration</Heading>
                 <TextLink
@@ -405,12 +403,14 @@ export default class ConfigScreen extends React.Component {
             {/* After connecting to VWO */}
             {!!this.props.accessToken && !isInstalled
               && <Flex flexDirection='column' alignItems='start' className={styles.body}>
+              <Stepper currentStep={2}/>
               <Heading marginBottom='spacingXl'>Just one more step!</Heading>
               <Note variant='warning' marginBottom='spacingL'>To complete setup, click 'Install' in the top-right corner and start using the VWO FME app.</Note>
             </Flex>}
 
             {/* After installing the VWO */}
             {isInstalled && this.props.accessToken && <Flex flexDirection='column' className={styles.body}>
+              <Stepper currentStep={3}/>
               <Heading marginBottom='spacingL'>Configuration</Heading>
               <Flex flexDirection='column' marginBottom='spacingXl'>
                   <FormControl.Label>Account ID</FormControl.Label>
@@ -420,11 +420,6 @@ export default class ConfigScreen extends React.Component {
                   <FormControl.Label>API Key</FormControl.Label>
                   <Text>{accessToken}</Text>
               </Flex>
-              {/* <ContentTypes 
-              addedContentTypes={Object.keys(this.state.config.contentTypes)}
-              allContentTypes={this.state.allContentTypes}
-              allReferenceFields={this.state.config.contentTypes}
-              onEdit={this.onEdit}/> */}
             </Flex>
             }
         </Flex>
