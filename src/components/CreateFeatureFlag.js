@@ -89,12 +89,12 @@ function FeatureFlag(props) {
     <React.Fragment>
       <div className={styles.container}>
          <Flex alignItems='center'>
-            <Heading element='h1' marginBottom='0px' marginRight='spacingXs'>Create feature flag</Heading>
+            <Heading element='h1' marginBottom='0px' marginRight='spacingXs'>Create new feature flag</Heading>
             <Tooltip placement='top' content='incomplete'>
                <HelpCircleIcon variant='muted'/>
             </Tooltip>
          </Flex>
-         <Subheading>Create a feature flag to enable different variations.</Subheading>
+         <Subheading>Feature flags let you control and test different variations of your content.</Subheading>
          <SectionSplitter />
          <Form onSubmit={createFeatureFlag}>
             <FormControl className={styles.fieldItem}>

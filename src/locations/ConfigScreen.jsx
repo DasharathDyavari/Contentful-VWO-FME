@@ -395,7 +395,7 @@ export default class ConfigScreen extends React.Component {
                   <TextInput
                     value={this.state.config.accessToken}
                     onChange={(e) => this.onApiKeyChange(e.target.value)}/>
-                  <Paragraph marginTop='spacingS'><TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">View</TextLink> the auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
+                  <Paragraph marginTop='spacingS'>View the auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
               </FormControl>
               <Note marginBottom='spacingXl'>This token grants read-only access to organization-level information stored in VWO. It is accessible via API by any users within the current Contentful space.</Note>
               <Button variant='primary' onClick={this.connectToVwo} isLoading={this.state.loading}>Connect with VWO</Button>

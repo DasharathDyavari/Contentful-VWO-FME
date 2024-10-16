@@ -62,7 +62,7 @@ function Variations(props) {
       {/* Default variation block */}
       <div className={styles.DefaultVariationTile} style={{padding: defaultVariation.variationContent? '20px': '40px', marginBottom: '40px'}}>
          <Heading style={{marginBottom: '5px', alignSelf: defaultVariation.variationContent? 'flex-start': 'auto'}}>Default (control) variation</Heading>
-         <Paragraph style={{marginBottom: '20px', alignSelf: defaultVariation.variationContent? 'flex-start': 'auto'}}>Wrapper & it’s entries associated with the default variation will be displayed here.</Paragraph>
+         <Paragraph style={{marginBottom: '20px', alignSelf: defaultVariation.variationContent? 'flex-start': 'auto'}}>Create a new entry or link an existing one to set up the default variation.</Paragraph>
          <CreateContent
           sdk={props.sdk}
           variation={defaultVariation}
@@ -76,8 +76,8 @@ function Variations(props) {
       {isDefaultVariationContentAdded && <div className={styles.DefaultVariationTile} style={{padding: (mappedVariations.length > 1)? '20px': '40px'}}>
          <div className={mappedVariations.length > 1? styles.variationsWithLength: styles.variationsWithoutLength}>
             <div style={{marginBottom: '5px', display: 'flex', justifyContent: 'center', flexDirection:'column', alignItems: (mappedVariations.length > 1)? 'flex-start': 'center'}}>
-              <Heading style={{marginBottom: '5px'}}>Other variation</Heading>
-              <Paragraph style={{marginBottom: '20px'}}>Others Wrapper & it’s entries will be displayed here.</Paragraph>
+              <Heading style={{marginBottom: '5px'}}>Create other variations</Heading>
+              <Paragraph style={{marginBottom: '20px'}}>Manage and view all entries for other variations.</Paragraph>
             </div>
             <Button variant='primary' size='small' onClick={() => setNewVariationModal(true)}>Add Variation</Button>
          </div>
