@@ -13,7 +13,6 @@ import Home from './locations/Home';
 import { Modal, Flex, Heading, Paragraph, FormControl, Button, Text, TextInput, TextLink } from '@contentful/f36-components';
 import { css } from 'emotion';
 import { validateCredentials } from './utils';
-import FeatureFlagDetailsModal from './modalComponents/FeatureFlagDetailsModal';
 
 const ComponentLocationSettings = {
   [locations.LOCATION_APP_CONFIG]: ConfigScreen,
@@ -44,7 +43,6 @@ const App = (props) => {
   }
 
   const [loading, setLoading] = useState(false);
-  const [featureFlagModal, setFeatureFlagModal] = useState(false);
   const [state,setState] = useState({
     client: null,
     accessToken: props.sdk.parameters.installation.accessToken || '',
@@ -125,18 +123,6 @@ const App = (props) => {
     setState(newState);
   }
 
-  const openModal = () => {
-    console.log('opening modal');
-    // setLocation(locations.LOCATION_ENTRY_EDITOR);
-    setFeatureFlagModal(true);
-  }
-
-  const closeModal = () => {
-    console.log('closing modal');
-    // setLocation(locations.LOCATION_ENTRY_SIDEBAR);
-    setFeatureFlagModal(false);
-  }
-
   useEffect(() => {
     validateUserCredentials(props);
   },[]);
@@ -170,13 +156,11 @@ const App = (props) => {
       <EntryEditor
         sdk={props.sdk}
         client={state.client}
-        hideFeatureFlagDetails={closeModal}
-        featureFlagModal={featureFlagModal}
         openAuth={openAuth}
       />
     );
   } else if (props.sdk.location.is(locations.LOCATION_ENTRY_SIDEBAR)) {
-    return <Sidebar sdk={props.sdk} client={state.client} showFeatureFlagDetails={openModal} />;
+    return <Sidebar sdk={props.sdk} client={state.client}/>;
   }
 
   // Handle other locations here...

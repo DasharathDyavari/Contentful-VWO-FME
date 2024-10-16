@@ -2,12 +2,14 @@ import React, {useState, useEffect} from 'react';
 import { Button, ButtonGroup, IconButton, Text, Flex, TextLink, TextInput, Subheading } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { EditIcon, DoneIcon } from '@contentful/f36-icons';
+import { EditIcon, ExternalLinkIcon } from '@contentful/f36-icons';
 
 
 const styles = {
   button: css({
-    marginBottom: tokens.spacingS
+    marginTop: '-10px',
+    marginBottom: tokens.spacingS,
+    minWidth: '100%'
   }),
   descriptionStyle: css({
     display: '-webkit-box',
@@ -89,20 +91,35 @@ const Sidebar = (props) => {
     });
   };
 
-  const openModal = () => {
-    window.sdk.window.postMessage('open-modal');
-  };
-  
   useEffect(() => {
     resetFeatureFlagValue();
+    const unsubsribeFeatureFlagChange = props.sdk.entry.fields.featureFlag.onValueChanged(featureFlag => {
+      setFeatureFlag(featureFlag);
+      setName(featureFlag?.name || '');
+      setDescription(featureFlag?.description || '');
+    });
+
+    return () => {
+      unsubsribeFeatureFlagChange();
+    }
   },[props.sdk.entry.fields.featureFlag]);
 
   const isFeatureFlagAdded = !!featureFlag?.id;
 
   return <React.Fragment>
       {/* Feature flag details */}
+      <Button
+          className={styles.button}
+          isDisabled={!isFeatureFlagAdded}
+          endIcon={<ExternalLinkIcon />}
+          size='small'
+          href={`https://app.vwo.com/#/full-stack/feature-flag/${featureFlag?.id}/edit/variables/`}
+          as={isFeatureFlagAdded? 'a': 'button'}
+          target="_blank">
+          View this feature flag in VWO
+        </Button>
       <Flex flexDirection='column' marginBottom='spacingM'>
-          <Flex alignItems='center' justifyContent='space-between' marginBottom={nameEditing? 'spacingXs': 'none'}>
+          <Flex alignItems='center' justifyContent='space-between' marginBottom={nameEditing? 'spacing2Xs': 'none'}>
             <Text>Name:</Text>
             {nameEditing? (
               <ButtonGroup variant='spaced' spacing='spacingM'>
@@ -141,8 +158,8 @@ const Sidebar = (props) => {
         )}
       </Flex>
 
-      <Flex flexDirection='column' marginBottom='spacingXs'>
-          <Flex alignItems='center' justifyContent='space-between' marginBottom={descriptionEditing? 'spacingXs': 'none'}>
+      <Flex flexDirection='column' marginBottom='none'>
+          <Flex alignItems='center' justifyContent='space-between' marginBottom={descriptionEditing? 'spacing2Xs': 'none'}>
             <Text>Description:</Text>
             {descriptionEditing? (
               <ButtonGroup variant='spaced' spacing='spacingM'>
@@ -181,23 +198,6 @@ const Sidebar = (props) => {
         )}
       </Flex>
       {/* {featureFlag?.id && <Button variant="transparent" onClick={props.showFeatureFlagDetails} style={{color: '#0059C8', marginTop: '0px'}}>Show all details</Button>} */}
-      <ButtonGroup variant='spaced' spacing='spacingM'>
-        <Button
-          as='a'
-          className={styles.button}
-          target="_blank"
-          href={'https://app.vwo.com/#/full-stack/feature-flag'}>
-          View all Feature flags
-        </Button>
-        <Button
-          className={styles.button}
-          isDisabled={!isFeatureFlagAdded}
-          href={`https://app.vwo.com/#/full-stack/feature-flag/${featureFlag?.id}/edit/variables`}
-          as={featureFlag?.id? 'a': 'button'}
-          target="_blank">
-          View in VWO
-        </Button>
-      </ButtonGroup>
   </React.Fragment>;
 };
 

@@ -84,7 +84,7 @@ function FeatureFlag(props) {
    }
 
    const isDisabled = !state.flagName.length;
-   console.log("here: ",props)
+   
   return (
     <React.Fragment>
       <div className={styles.container}>

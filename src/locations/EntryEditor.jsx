@@ -1,13 +1,11 @@
 import React, {useEffect, useCallback} from 'react';
-import { Skeleton, Modal, Stack, Text, Paragraph } from '@contentful/f36-components';
+import { Skeleton, Modal, Stack, Text, Paragraph, Button } from '@contentful/f36-components';
 import useMethods from 'use-methods';
 import { css } from 'emotion';
 import CreateFeatureFlag from '../components/CreateFeatureFlag';
 import tokens from '@contentful/f36-tokens';
 import Variations from '../components/Variations';
 import FeatureFlagDetailsModal from '../modalComponents/FeatureFlagDetailsModal';
-
-const GlobalStateContext = React.createContext(null);
 
 const styles = {
   editor: css({
@@ -339,30 +337,29 @@ const EntryEditor = (props) => {
     props.sdk.entry.fields.meta,
     props.sdk.entry.fields.variations
   ]);
+
   const isFeatureFlagCreated = state.featureFlag?.id;
+
   return (
     <React.Fragment>
-      <GlobalStateContext.Provider value={globalState}>
-        <div className={styles.editor}>
-          {state.loading && <Skeleton.Container>
-            <Skeleton.BodyText numberOfLines={10} />
-          </Skeleton.Container>}
-          {props.featureFlagModal && <FeatureFlagDetailsModal onClose={props.hideFeatureFlagDetails} featureFlag={state.featureFlag}/>}
-          {!state.loading && !isFeatureFlagCreated && 
-            <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
-          {isFeatureFlagCreated && !state.loading && 
-            <Variations
-              sdk={props.sdk}
-              updateVwoVariationName={updateVwoVariationName}
-              addNewVwoVariation={addNewVwoVariation}
-              contentTypes={state.contentTypes}
-              vwoVariations={state.vwoVariations}
-              onCreateVariationEntry={onCreateVariationEntry}
-              linkExistingEntry={linkExistingEntry}
-              updateVwoVariationContent={updateVwoVariationContent}
-              entries = {state.entries}/>}
-        </div>
-      </GlobalStateContext.Provider>
+      <div className={styles.editor}>
+        {state.loading && <Skeleton.Container>
+          <Skeleton.BodyText numberOfLines={10} />
+        </Skeleton.Container>}
+        {!state.loading && !isFeatureFlagCreated && 
+          <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
+        {isFeatureFlagCreated && !state.loading && 
+          <Variations
+            sdk={props.sdk}
+            updateVwoVariationName={updateVwoVariationName}
+            addNewVwoVariation={addNewVwoVariation}
+            contentTypes={state.contentTypes}
+            vwoVariations={state.vwoVariations}
+            onCreateVariationEntry={onCreateVariationEntry}
+            linkExistingEntry={linkExistingEntry}
+            updateVwoVariationContent={updateVwoVariationContent}
+            entries = {state.entries}/>}
+      </div>
     </React.Fragment>
   )
 };
