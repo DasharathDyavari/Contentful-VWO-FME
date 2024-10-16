@@ -1,6 +1,6 @@
-import React from 'react';
-import { EntryCard, Menu, MenuItem, ButtonGroup, Button } from '@contentful/f36-components';
-import { PlusIcon } from '@contentful/f36-icons';
+import React, { useEffect, useState } from 'react';
+import { EntryCard, TextInput, Modal, List, MenuItem, ButtonGroup, Button, Flex } from '@contentful/f36-components';
+import { PlusIcon, SearchIcon } from '@contentful/f36-icons';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
 
@@ -12,17 +12,56 @@ const styles = {
      marginBottom: '0px'
    }),
    menuList: css({
-      maxHeight: '200px'
+      maxHeight: '200px', 
+      listStyle: 'none',
+      padding: '0px'
    }),
    menuListHeader: css({
       marginLeft: tokens.spacingS,
       fontWeight: 'bold'
+   }),
+   listItem: css({
+      marginBottom: '0px',
+      borderBottom: '1px solid lightgrey',
+      cursor: 'pointer',
+      margin: '5px 0px',
+      padding: '6px',
+      fontWeight: '600'
+   }),
+   modal: css({
+      minHeight: '340px',
+      padding: '0px'
+   }),
+   emptyResults: css({
+      margin: '40px',
+      padding: '20px 40px',
+      border: '1px solid lightgrey',
+      borderRadius: '5px'
+   }),
+   searchBox: css({
+      position: 'fixed',
+      width: '90%',
+      top: '57px',
+      height: '55px',
+      backgroundColor: 'white',
+      display: 'flex',
+      alignItems: 'flex-end'
    })
  };
 
 function CreateContent(props) {
+   const [selectContentType, setSelectContentType] = useState(false);
+   const [searchText, setSearchText] = useState('');
+   const [contentTypes, setContentTypes] = useState([]);
    const editContent = (vwoVariation) => {
+      setSelectContentType(false);
       props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value,{slideIn: true});
+   }
+
+   const onSearchTextChange = (searchText) => {
+      setSearchText(searchText);
+      let filteredContentTypes = props.contentTypes.filter(contentType => contentType.name.includes(searchText));
+      setContentTypes(filteredContentTypes);
    }
 
    const removeContent = (vwoVariation) => {
@@ -43,23 +82,52 @@ function CreateContent(props) {
       }
    }
 
+   const onContentTypeClick = async (contentType) => {
+      await props.onCreateVariationEntry(props.variation.vwoVariation, contentType);
+      setSelectContentType(false);
+   }
+
+   const setInitialData = () => {
+      setContentTypes(props.contentTypes);
+   }
+
+   useEffect(() => {
+      setInitialData();
+   },[])
+
    const isContentAdded = props.variation.variationContent;
    return (
       <React.Fragment>
+         <Modal isShown={selectContentType} onClose={() => setSelectContentType(false)} className={styles.modal}>
+         {() => (
+               <>
+                  <Modal.Header
+                     title="Select content type"
+                     onClose={() => setSelectContentType(false)}
+                  />
+                  <Modal.Content>
+                     {/* <div className={styles.searchBox}> */}
+                        <TextInput
+                           icon={<SearchIcon />}
+                           value={searchText}
+                           placeholder="Search content type"
+                           onChange={(e) => onSearchTextChange(e.target.value)}
+                           />
+                     {/* </div> */}
+                     {!contentTypes.length && <Flex className={styles.emptyResults} alignItems='center' justifyContent='center'>No results found</Flex>}
+                     <List className={styles.menuList}>
+                        {contentTypes.map(contentType => {
+                           return <List.Item className={styles.listItem} key={contentType.sys.id} onClick={() => onContentTypeClick(contentType)}>{contentType.name}</List.Item>
+                        })}
+                     </List>
+                  </Modal.Content>
+               </>
+         )}
+         </Modal>
          {!isContentAdded && <ButtonGroup variant='spaced'>
-          <Menu>
-                <Menu.Trigger>
-                  <Button variant="secondary" size="small">
-                    Create entry and link
-                  </Button>
-                </Menu.Trigger>
-                <Menu.List className={styles.menuList}>
-                  <Menu.ListHeader className={styles.menuListHeader}>Select content type</Menu.ListHeader>
-                  {props.contentTypes.map(contentType => {
-                      return <Menu.Item key={contentType.sys.id} onClick={() => props.onCreateVariationEntry(props.variation.vwoVariation, contentType)}>{contentType.name}</Menu.Item>
-                  })}
-                </Menu.List>
-            </Menu>
+            <Button variant="secondary" size="small" onClick={() => setSelectContentType(true)}>
+               Create entry and link
+            </Button>
             <Button variant="secondary" size="small" onClick={() => props.linkExistingEntry(props.variation.vwoVariation)}>
               Link an existing entry
             </Button>

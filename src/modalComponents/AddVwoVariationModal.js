@@ -27,7 +27,7 @@ function AddVwoVariationModal(props) {
 
     useEffect(() => {
       updateVwoVariationsName(props.vwoVariationsLength);
-    },[props.vwoVariations]);
+    },[props.vwoVariationsLength]);
 
   return (
       <React.Fragment>
@@ -59,6 +59,7 @@ function AddVwoVariationModal(props) {
                <Button
                   size="small"
                   variant="positive"
+                  isDisabled={!variationName}
                   isLoading={loading}
                   onClick={() => addVwoVariationModal(variationName)}
                >

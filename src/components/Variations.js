@@ -68,6 +68,7 @@ function Variations(props) {
           variation={defaultVariation}
           contentTypes={props.contentTypes}
           linkExistingEntry={props.linkExistingEntry}
+          onCreateVariationEntry={props.onCreateVariationEntry}
           updateVwoVariationContent={props.updateVwoVariationContent}/>
       </div>
 
