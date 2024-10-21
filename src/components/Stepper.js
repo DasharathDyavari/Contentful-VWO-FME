@@ -29,7 +29,7 @@ const styles = {
     backgroundColor: tokens.colorWhite,
     border: `2px solid ${tokens.gray400}`,
     color: tokens.gray400,
-    fontSize: tokens.fontSizeL,
+    fontSize: tokens.fontSizeM,
     fontWeight: tokens.fontWeightDemiBold,
   }),
   circleCompleted: css({

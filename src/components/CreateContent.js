@@ -60,7 +60,7 @@ function CreateContent(props) {
 
    const onSearchTextChange = (searchText) => {
       setSearchText(searchText);
-      let filteredContentTypes = props.contentTypes.filter(contentType => contentType.name.includes(searchText));
+      let filteredContentTypes = props.contentTypes.filter(contentType => (contentType.name).toLowerCase().includes(searchText.toLowerCase()));
       setContentTypes(filteredContentTypes);
    }
 

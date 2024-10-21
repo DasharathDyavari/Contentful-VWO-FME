@@ -393,6 +393,7 @@ export default class ConfigScreen extends React.Component {
               <FormControl className={styles.formItem}>
                   <FormControl.Label isRequired>API Key</FormControl.Label>
                   <TextInput
+                    type='password'
                     value={this.state.config.accessToken}
                     onChange={(e) => this.onApiKeyChange(e.target.value)}/>
                   <Paragraph marginTop='spacingS'>View the auth token in Integrations &gt; Contentful &gt; Config section. See <TextLink href='https://help.vwo.com/hc/en-us/articles/4404205211929-Integrating-VWO-With-Contentful' target='_blank' rel="noopener noreferrer">knowledge base</TextLink> for more details.</Paragraph>
