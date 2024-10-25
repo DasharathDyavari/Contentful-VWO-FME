@@ -55,7 +55,9 @@ function CreateContent(props) {
    const [contentTypes, setContentTypes] = useState([]);
    const editContent = (vwoVariation) => {
       setSelectContentType(false);
-      props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value,{slideIn: true});
+      props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value,{slideIn: { waitForClose: true }}).then((updatedEntry) => {
+         props.updateContentfulEntries(updatedEntry);
+      });
    }
 
    const onSearchTextChange = (searchText) => {

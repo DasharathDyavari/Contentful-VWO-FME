@@ -1,27 +1,33 @@
 import React, {useEffect, useCallback} from 'react';
-import { Skeleton, Modal, Stack, Text, Paragraph, Button } from '@contentful/f36-components';
+import { Skeleton, Modal, Paragraph, Button, Heading, Flex } from '@contentful/f36-components';
 import useMethods from 'use-methods';
 import { css } from 'emotion';
 import CreateFeatureFlag from '../components/CreateFeatureFlag';
 import tokens from '@contentful/f36-tokens';
 import Variations from '../components/Variations';
-import FeatureFlagDetailsModal from '../modalComponents/FeatureFlagDetailsModal';
+import { ExternalLinkIcon } from '@contentful/f36-icons';
 
 const styles = {
   editor: css({
     margin: tokens.spacingXl
+  }),
+  button: css({
+    marginTop: '-10px',
+    marginBottom: tokens.spacingS,
+    width: '600px'
   })
 };
 
 const methods = state => {
   return {
-    setInitialData({featureFlag, contentTypes, variations, entries, vwoVariations }){
+    setInitialData({featureFlag, contentTypes, variations, entries, vwoVariations, error }){
       vwoVariations.sort((a,b) => b.id-a.id);
       state.featureFlag = featureFlag;
       state.variations = variations;
       state.contentTypes = contentTypes;
       state.entries = entries;
       state.vwoVariations = vwoVariations;
+      state.error = error;
     },
     setLoading(loadingState){
       state.loading = loadingState;
@@ -53,7 +59,7 @@ const methods = state => {
 
 const getInitialValues = sdk => ({
   loading: true,
-  error: false,
+  error: '',
   currentStep: 1,
   contentTypes: [],
   meta: sdk.entry.fields.meta?.getValue() || {},
@@ -71,18 +77,19 @@ const fetchInitialData = async (props) => {
   ]);
   const featureFlag = props.sdk.entry.fields.featureFlag.getValue();
   let vwoVariations = [];
+  let error = '';
   if(featureFlag?.id){
-    const resp = await props.client.getFeatureFlagById(featureFlag.id);
-
-    if(resp && resp._data?.variations){
-      vwoVariations = resp._data.variations;
-    } else {
-      const message = resp?._errors?.length? resp._errors[0].message: 'Feature flag not found. Please check on the VWO app.';
-      props.sdk.notifier.error(message);
-      featureFlag = {};
-      if(resp?._errors && resp?._errors.length && resp?._errors[0].code === 404){
-        props.sdk.entry.fields.featureFlag.setValue({});
+    try {
+      const resp = await props.client.getFeatureFlagById(featureFlag.id);
+      if(resp && resp._data?.variations){
+        vwoVariations = resp._data.variations;
+      } else {
+        const message = resp?._errors?.length ? resp._errors[0].message: 'Feature flag not found. Please check on the VWO app.';
+        throw new Error(message);
       }
+    } catch (err) {
+      error = err;
+      props.sdk.notifier.error(err);
     }
   }
   return {
@@ -90,7 +97,8 @@ const fetchInitialData = async (props) => {
     contentTypes: contentTypes.items,
     variations: props.sdk.entry.fields.variations.getValue() || [],
     entries: entries.items,
-    vwoVariations
+    vwoVariations,
+    error
   }
 }
 
@@ -178,6 +186,22 @@ const EntryEditor = (props) => {
     });
   }
 
+  const updateContentfulEntries = async (updatedEntry) => {
+    if(updatedEntry){
+      props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => {
+          let entries = resp.items.map(entry => {
+            if(updatedEntry.entity.sys.id === entry.sys.id){
+              return updatedEntry.entity;
+            }
+            return entry;
+          });
+          actions.setEntries(entries);
+      });
+    } else {
+      props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
+    }
+  }
+
   const updateVwoVariationContent = useCallback(async (variation, contentId, updateEntries) => {
     // Default variation cannot be edited directly. Update variable instead and default variations will be updated
     if(variation.id === 1){
@@ -187,6 +211,7 @@ const EntryEditor = (props) => {
         dataType: 'string',
         defaultValue: contentId
       }];
+      featureFlag.description = featureFlag.description || '';
       updateFeatureFlagDetails(featureFlag)
       .then(updatedFeatureFlag => {
         actions.setFeatureFlag(updatedFeatureFlag);
@@ -195,7 +220,7 @@ const EntryEditor = (props) => {
         variations.sort((a,b) => b.id-a.id);
         actions.setVwoVariations(variations);
         if(updateEntries){
-          props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
+          updateContentfulEntries();
         }
         props.sdk.notifier.success('VWO Variations updated successfully');
       })
@@ -216,7 +241,7 @@ const EntryEditor = (props) => {
         variations.sort((a,b) => b.id-a.id);
         actions.setVwoVariations(variations);
         if(updateEntries){
-          props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
+          updateContentfulEntries();
         }
       })
       .catch(err => {
@@ -278,8 +303,11 @@ const EntryEditor = (props) => {
 
   const onCreateVariationEntry = useCallback(async(vwoVariation, contentType) => {
     const data = await props.sdk.navigator.openNewEntry(contentType.sys.id,{
-      slideIn: true
-    });
+      slideIn: { waitForClose: true }
+    }).then((updatedEntry) => {
+      updateContentfulEntries(updatedEntry);
+      return updatedEntry;
+   });
 
     if(!data){
       return;
@@ -348,7 +376,7 @@ const EntryEditor = (props) => {
         </Skeleton.Container>}
         {!state.loading && !isFeatureFlagCreated && 
           <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
-        {isFeatureFlagCreated && !state.loading && 
+        {isFeatureFlagCreated && !state.loading && !state.error &&
           <Variations
             sdk={props.sdk}
             updateVwoVariationName={updateVwoVariationName}
@@ -357,8 +385,34 @@ const EntryEditor = (props) => {
             vwoVariations={state.vwoVariations}
             onCreateVariationEntry={onCreateVariationEntry}
             linkExistingEntry={linkExistingEntry}
+            updateContentfulEntries={updateContentfulEntries}
             updateVwoVariationContent={updateVwoVariationContent}
-            entries = {state.entries}/>}
+            entries = {state.entries}/>
+        }
+        <Modal onClose={() => actions.setError('')} isShown={state.error}>
+          {() => (
+            <>
+              <Flex alignItems='center' justifyContent='center' flexDirection='column' padding='spacingL'>
+                <Heading style={{marginBottom: '30px', textAlign: 'center'}}>
+                  Feature flag not found
+                </Heading>
+                <Paragraph fontSize='fontSizeL' marginBottom='spacingXl'>
+                  We couldn't locate the feature flag <strong>{state.featureFlag.name}</strong>. It may have been removed from the VWO app, or there was an issue retrieving it.
+                </Paragraph>
+                <Button
+                  className={styles.button}
+                  endIcon={<ExternalLinkIcon />}
+                  variant='negative'
+                  size='small'
+                  href={`https://app.vwo.com/#/full-stack/feature-flag/${state.featureFlag?.id}/edit/variables/`}
+                  as='a'
+                  target="_blank">
+                  View this feature flag in VWO
+                </Button>
+              </Flex>
+            </>
+          )}
+        </Modal>
       </div>
     </React.Fragment>
   )

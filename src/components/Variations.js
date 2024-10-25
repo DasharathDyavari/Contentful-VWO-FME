@@ -48,7 +48,7 @@ function Variations(props) {
   const [newVariationModal, setNewVariationModal] = useState(false);
 
   const mappedVariations = mapVwoVariationsAndContent(props.vwoVariations, props.entries, props.contentTypes, props.sdk.locales.default);
-  const defaultVariation = mappedVariations.filter(variation => variation.vwoVariation.id === 1)[0];
+  const defaultVariation = mappedVariations.filter(variation => variation.vwoVariation.id === 1)[0] || {};
   const isDefaultVariationContentAdded = defaultVariation?.variationContent;
   return (
     <React.Fragment>
@@ -67,6 +67,7 @@ function Variations(props) {
           sdk={props.sdk}
           variation={defaultVariation}
           contentTypes={props.contentTypes}
+          updateContentfulEntries={props.updateContentfulEntries}
           linkExistingEntry={props.linkExistingEntry}
           onCreateVariationEntry={props.onCreateVariationEntry}
           updateVwoVariationContent={props.updateVwoVariationContent}/>
@@ -90,6 +91,7 @@ function Variations(props) {
                 variation={variation}
                 linkExistingEntry={props.linkExistingEntry}
                 contentTypes={props.contentTypes}
+                updateContentfulEntries={props.updateContentfulEntries}
                 updateVwoVariationName={props.updateVwoVariationName}
                 onCreateVariationEntry={props.onCreateVariationEntry}
                 updateVwoVariationContent={props.updateVwoVariationContent}
