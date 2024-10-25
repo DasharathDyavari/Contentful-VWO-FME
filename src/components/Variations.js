@@ -46,8 +46,8 @@ const styles = {
 
 function Variations(props) {
   const [newVariationModal, setNewVariationModal] = useState(false);
-
-  const mappedVariations = mapVwoVariationsAndContent(props.vwoVariations, props.entries, props.contentTypes, props.sdk.locales.default);
+  const vwoVariations = props.sdk.entry.fields.featureFlag.getValue().variations;
+  const mappedVariations = mapVwoVariationsAndContent(vwoVariations, props.entries, props.contentTypes, props.sdk.locales.default);
   const defaultVariation = mappedVariations.filter(variation => variation.vwoVariation.id === 1)[0] || {};
   const isDefaultVariationContentAdded = defaultVariation?.variationContent;
   return (
@@ -56,7 +56,7 @@ function Variations(props) {
       <AddVwoVariationModal
         addNewVwoVariation={props.addNewVwoVariation}
         setNewVariationModal={setNewVariationModal}
-        vwoVariationsLength={props.vwoVariations.length}
+        vwoVariationsLength={vwoVariations.length}
         newVariationModal={newVariationModal}/>
 
       {/* Default variation block */}

@@ -72,14 +72,11 @@ function CreateContent(props) {
          props.sdk.notifier.error('Default variation content cannot be removed');
          return;
       }
-      let variations = props.sdk.entry.fields.variations.getValue() || [];
       const meta = props.sdk.entry.fields.meta.getValue() || {};
 
       if(vwoVariation){
          delete meta[vwoVariation.id];
-         variations = variations.filter(value => value.sys.id !== vwoVariation.jsonContent[0].value)
          props.sdk.entry.fields.meta.setValue(meta);
-         props.sdk.entry.fields.variations.setValue(variations);
          props.updateVwoVariationContent(vwoVariation, '', false);
       }
    }

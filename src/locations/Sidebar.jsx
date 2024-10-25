@@ -79,6 +79,7 @@ const Sidebar = (props) => {
     updateFeatureFlagDetails(featureFlag)
     .then((featureFlag) => {
       setFeatureFlag(featureFlag);
+      props.sdk.entry.fields.title.setValue(featureFlag.name);
       props.sdk.notifier.success('VWO Feature flag updated successfully');
     })
     .catch((err) => {

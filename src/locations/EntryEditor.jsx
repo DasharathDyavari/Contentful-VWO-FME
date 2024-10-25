@@ -20,13 +20,10 @@ const styles = {
 
 const methods = state => {
   return {
-    setInitialData({featureFlag, contentTypes, variations, entries, vwoVariations, error }){
-      vwoVariations.sort((a,b) => b.id-a.id);
+    setInitialData({featureFlag, contentTypes, entries, error }){
       state.featureFlag = featureFlag;
-      state.variations = variations;
       state.contentTypes = contentTypes;
       state.entries = entries;
-      state.vwoVariations = vwoVariations;
       state.error = error;
     },
     setLoading(loadingState){
@@ -41,15 +38,8 @@ const methods = state => {
     setEntries(entries){
       state.entries = entries;
     },
-    setVwoVariations(variations){
-
-      state.vwoVariations = variations;
-    },
     setError(message){
       state.error = message;
-    },
-    setVariations(variations){
-      state.variations = variations;
     },
     setMeta(meta) {
       state.meta = meta;
@@ -63,8 +53,6 @@ const getInitialValues = sdk => ({
   currentStep: 1,
   contentTypes: [],
   meta: sdk.entry.fields.meta?.getValue() || {},
-  variations: sdk.entry.fields.variations.getValue() || [],
-  vwoVariations: [],
   featureFlag: sdk.entry.fields.featureFlag.getValue() || {},
   entries: {}
 })
@@ -76,13 +64,14 @@ const fetchInitialData = async (props) => {
     space.getEntries({ skip: 0, limit: 1000})
   ]);
   const featureFlag = props.sdk.entry.fields.featureFlag.getValue();
-  let vwoVariations = [];
   let error = '';
   if(featureFlag?.id){
     try {
       const resp = await props.client.getFeatureFlagById(featureFlag.id);
       if(resp && resp._data?.variations){
-        vwoVariations = resp._data.variations;
+        let variations = resp._data?.variations;
+        variations.sort((a,b) => b.id-a.id)
+        featureFlag.variations = variations;
       } else {
         const message = resp?._errors?.length ? resp._errors[0].message: 'Feature flag not found. Please check on the VWO app.';
         throw new Error(message);
@@ -95,9 +84,7 @@ const fetchInitialData = async (props) => {
   return {
     featureFlag: featureFlag,
     contentTypes: contentTypes.items,
-    variations: props.sdk.entry.fields.variations.getValue() || [],
     entries: entries.items,
-    vwoVariations,
     error
   }
 }
@@ -123,6 +110,9 @@ const EntryEditor = (props) => {
         resolve(response._data.variations);
       }
       else if(response && response._errors?.length){
+        if(response._errors[0].code === 404){
+          actions.setError(response._errors[0].message);
+        }
         reject(response._errors[0].message);
       }
       else{
@@ -133,23 +123,31 @@ const EntryEditor = (props) => {
 
   const updateFeatureFlagDetails = async (updatedFeatureFlag) => {
     return new Promise(async (resolve, reject) => {
-      const response = await props.client.updateFeatureFlag(updatedFeatureFlag);
-      if(response && response._data){
-        props.sdk.entry.fields.featureFlag.setValue(response._data);
-        actions.setFeatureFlag(response._data);
-        resolve(response._data);
-      }
-      else if(response && response._errors?.length){
-        reject(response._errors[0].message);
-      }
-      else{
-        reject('Something went wrong while updating Feature flag details. Please try again');
+      try {
+        const response = await props.client.updateFeatureFlag(updatedFeatureFlag);
+        if(response && response._data){
+          props.sdk.entry.fields.featureFlag.setValue(response._data);
+          actions.setFeatureFlag(response._data);
+          actions.setError('');
+          resolve(response._data);
+        }
+        else if(response && response._errors?.length){
+          if(response._errors[0].code === 404){
+            actions.setError(response._errors[0].message);
+          }
+          reject(response._errors[0].message);
+        }
+        else{
+          reject('Something went wrong while updating Feature flag details. Please try again');
+        }
+      } catch (err) {
+        reject(err.message)
       }
     });
   }
 
   const updateVwoVariationName = async (vwoVariation, variationName) => {
-    const updatedVwoVariations = state.vwoVariations.map(variation => {
+    const updatedVwoVariations = state.featureFlag.variations.map(variation => {
       if(variation.id === vwoVariation.id){
         variation.name = variationName;
       }
@@ -170,13 +168,16 @@ const EntryEditor = (props) => {
   }
 
   const addNewVwoVariation = async (variationName) => {
-    let newVwoVariation = getNewVariation(variationName, state.vwoVariations.length);
-    const updatedVwoVariations = [...state.vwoVariations,newVwoVariation];
+    let newVwoVariation = getNewVariation(variationName, state.featureFlag.variations.length);
+    const updatedVwoVariations = [...state.featureFlag.variations,newVwoVariation];
 
     return updateVariationsInVwo(updatedVwoVariations)
     .then(variations => {
       variations.sort((a,b) => b.id-a.id);
-      actions.setVwoVariations(variations);
+      let featureFlag = state.featureFlag;
+      featureFlag.variations = variations;
+      actions.setFeatureFlag(featureFlag);
+      props.sdk.entry.fields.featureFlag.setValue(featureFlag);
       props.sdk.notifier.success('VWO Variation added successfully');
       return true;
     })
@@ -214,11 +215,9 @@ const EntryEditor = (props) => {
       featureFlag.description = featureFlag.description || '';
       updateFeatureFlagDetails(featureFlag)
       .then(updatedFeatureFlag => {
+        updatedFeatureFlag.variations.sort((a,b) => b.id-a.id);
         actions.setFeatureFlag(updatedFeatureFlag);
         props.sdk.entry.fields.featureFlag.setValue(updatedFeatureFlag);
-        const variations = updatedFeatureFlag.variations;
-        variations.sort((a,b) => b.id-a.id);
-        actions.setVwoVariations(variations);
         if(updateEntries){
           updateContentfulEntries();
         }
@@ -229,7 +228,7 @@ const EntryEditor = (props) => {
       });
     }
     else{
-      let updatedVwoVariations = state.vwoVariations.map((vwoVariation) => {
+      let updatedVwoVariations = state.featureFlag.variations.map((vwoVariation) => {
         if(vwoVariation.id === variation.id){
           vwoVariation.jsonContent[0].value = contentId;
         }
@@ -239,7 +238,9 @@ const EntryEditor = (props) => {
       updateVariationsInVwo(updatedVwoVariations)
       .then(variations => {
         variations.sort((a,b) => b.id-a.id);
-        actions.setVwoVariations(variations);
+        let featureFlag = state.featureFlag;
+        featureFlag.variations = variations;
+        actions.setFeatureFlag(featureFlag);
         if(updateEntries){
           updateContentfulEntries();
         }
@@ -255,14 +256,18 @@ const EntryEditor = (props) => {
       let resp = await props.client.createFeatureFlag(featureFlag);
       if(resp && resp._data){
         featureFlag.id = resp._data.id;
+        featureFlag.variations = [resp._data.variations];
+        props.sdk.entry.fields.title.setValue(featureFlag.name);
         props.sdk.entry.fields.featureFlag.setValue(featureFlag);
         actions.setFeatureFlag(featureFlag);
-        let vwoVariation = resp._data.variations;
-        actions.setVwoVariations([vwoVariation]);
         actions.setCurrentStep(3);
+        actions.setError('');
         props.sdk.notifier.success('Feature flag created successfully');
       }
       else if(resp && resp._errors?.length){
+        if(resp._errors[0].code === 404){
+          actions.setError(resp._errors[0].message);
+        }
         props.sdk.notifier.error(resp._errors[0].message);
       }
       else{
@@ -280,23 +285,11 @@ const EntryEditor = (props) => {
       return;
     }
     
-    const variations = props.sdk.entry.fields.variations.getValue() || [];
     const meta = props.sdk.entry.fields.meta.getValue() || {};
     props.sdk.entry.fields.meta.setValue({
       ...meta,
       [vwoVariation.id]: data.sys.id
     });
-
-    props.sdk.entry.fields.variations.setValue([
-      ...variations,
-      {
-        sys: {
-          type: 'Link',
-          id: data.sys.id,
-          linkType: 'Entry'
-        }
-      }
-    ]);
 
     updateVwoVariationContent(vwoVariation, data.sys.id, false);
   });
@@ -313,7 +306,6 @@ const EntryEditor = (props) => {
       return;
     }
 
-    const variations = props.sdk.entry.fields.variations.getValue() || [];
     const meta = props.sdk.entry.fields.meta.getValue() || {};
 
     props.sdk.entry.fields.meta.setValue({
@@ -321,16 +313,6 @@ const EntryEditor = (props) => {
       [vwoVariation.id]: data.entity.sys.id
     });
 
-    props.sdk.entry.fields.variations.setValue([
-      ...variations,
-      {
-        sys: {
-          type: 'Link',
-          id: data.entity.sys.id,
-          linkType: 'Entry'
-        }
-      }
-    ]);
     updateVwoVariationContent(vwoVariation, data.entity.sys.id, true);
   });
 
@@ -341,7 +323,7 @@ const EntryEditor = (props) => {
         return data;
       })
       .catch(() => {
-        actions.setError('Unable to load initial data');
+        props.sdk.notifier.error('Unable to load initial data');
       })
       .finally(() => {
         actions.setLoading(!props.client);
@@ -349,21 +331,16 @@ const EntryEditor = (props) => {
   }, [props.client]);
 
   useEffect(() => {
-    const unsubsribeVariationsChange = props.sdk.entry.fields.variations.onValueChanged(data => {
-      actions.setVariations(data || []);
-    });
     const unsubscribeMetaChange = props.sdk.entry.fields.meta.onValueChanged(data => {
       actions.setMeta(data || {});
     });
 
     return () => {
-      unsubsribeVariationsChange();
       unsubscribeMetaChange();
     }
   },[
     actions,
-    props.sdk.entry.fields.meta,
-    props.sdk.entry.fields.variations
+    props.sdk.entry.fields.meta
   ]);
 
   const isFeatureFlagCreated = state.featureFlag?.id;
@@ -374,22 +351,21 @@ const EntryEditor = (props) => {
         {state.loading && <Skeleton.Container>
           <Skeleton.BodyText numberOfLines={10} />
         </Skeleton.Container>}
-        {!state.loading && !isFeatureFlagCreated && 
+        {!state.loading && !isFeatureFlagCreated && !state.error && 
           <CreateFeatureFlag onFeatureFlagCreation={createFeatureFlag} entryId={props.sdk.ids.entry}/>}
-        {isFeatureFlagCreated && !state.loading && !state.error &&
+        {isFeatureFlagCreated && !state.loading && !state.error && 
           <Variations
             sdk={props.sdk}
             updateVwoVariationName={updateVwoVariationName}
             addNewVwoVariation={addNewVwoVariation}
             contentTypes={state.contentTypes}
-            vwoVariations={state.vwoVariations}
             onCreateVariationEntry={onCreateVariationEntry}
             linkExistingEntry={linkExistingEntry}
             updateContentfulEntries={updateContentfulEntries}
             updateVwoVariationContent={updateVwoVariationContent}
             entries = {state.entries}/>
         }
-        <Modal onClose={() => actions.setError('')} isShown={state.error}>
+        <Modal onClose={() => actions.setError('')} isShown={!!state.error && !state.loading}>
           {() => (
             <>
               <Flex alignItems='center' justifyContent='center' flexDirection='column' padding='spacingL'>
@@ -397,7 +373,7 @@ const EntryEditor = (props) => {
                   Feature flag not found
                 </Heading>
                 <Paragraph fontSize='fontSizeL' marginBottom='spacingXl'>
-                  We couldn't locate the feature flag <strong>{state.featureFlag.name}</strong>. It may have been removed from the VWO app, or there was an issue retrieving it.
+                  We couldn't locate the feature flag <strong>{state.featureFlag?.name}</strong>. It may have been removed from the VWO app, or there was an issue retrieving it.
                 </Paragraph>
                 <Button
                   className={styles.button}

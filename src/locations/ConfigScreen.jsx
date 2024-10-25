@@ -66,7 +66,7 @@ export default class ConfigScreen extends React.Component {
         id: VARIATION_CONTAINER_ID,
       },
       name: "VWO FME Wrapper",
-      displayField: "featureFlag",
+      displayField: "title",
       fields: [
         {
           "id": "title",
@@ -87,21 +87,6 @@ export default class ConfigScreen extends React.Component {
           "validations": [],
           "disabled": false,
           "omitted": false
-        },
-        {
-          "id": "variations",
-          "name": "Variations",
-          "type": "Array",
-          "localized": false,
-          "required": false,
-          "validations": [],
-          "disabled": false,
-          "omitted": false,
-          "items": {
-            "type": "Link",
-            "validations": [],
-            "linkType": "Entry"
-          }
         },
         {
           "id": "featureFlag",
