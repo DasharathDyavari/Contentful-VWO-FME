@@ -87,7 +87,7 @@ function CreateContent(props) {
    }
 
    const setInitialData = () => {
-      setContentTypes(props.contentTypes);
+      setContentTypes(props.contentTypes.filter(contentType => contentType.name !== props.sdk.contentType.name));
    }
 
    useEffect(() => {

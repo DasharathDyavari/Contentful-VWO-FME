@@ -278,7 +278,8 @@ const EntryEditor = (props) => {
 
   const linkExistingEntry = useCallback(async (vwoVariation) => {
     const data = await props.sdk.dialogs.selectSingleEntry({
-      locale: props.sdk.locales.default
+      locale: props.sdk.locales.default,
+      contentTypes: state.contentTypes.map(contentType => contentType.name).filter(contentType => contentType.name !== props.sdk.contentType.name)
     });
     
     if(!data){
