@@ -75,6 +75,9 @@ export default class ConfigScreen extends React.Component {
           "localized": false,
           "required": false,
           "validations": [],
+          "defaultValue": {
+            "en-US": "[VWO] FME Entry"
+          },
           "disabled": false,
           "omitted": false
         },
