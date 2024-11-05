@@ -16,7 +16,16 @@ const styles = {
     border: '1px solid lightgrey',
     borderRadius: '10px',
     padding: '25px'
- })
+ }),
+ variationName: css({
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 1, // Limit to 2 lines
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '200px',
+    whiteSpace: 'normal', // Allows text wrapping within lines
+  })
  };
  
 function VariationItem(props) {
@@ -57,7 +66,7 @@ function VariationItem(props) {
         <Flex alignItems="center" marginBottom='spacingXs'>
           {!isEditing ? (
             <Stack flexDirection="row" alignItems="center" spacing="spacingXs">
-              <Text>{`${props.index}_${name}`}</Text>
+              <Text className={styles.variationName}>{`${props.index}_${name}`}</Text>
               <IconButton
                 icon={<EditIcon />}
                 aria-label="Edit"
