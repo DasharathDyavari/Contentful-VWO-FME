@@ -86,7 +86,7 @@ function Variations(props) {
           {mappedVariations.filter(variation => variation.vwoVariation.id !== 1).map((variation,index) => {
             return <List.Item key={variation.vwoVariation.id}>
               <VariationItem
-                index={index+1}
+                index={mappedVariations.length - index - 1}
                 sdk={props.sdk}
                 variation={variation}
                 linkExistingEntry={props.linkExistingEntry}

@@ -53,6 +53,7 @@ function CreateContent(props) {
    const [selectContentType, setSelectContentType] = useState(false);
    const [searchText, setSearchText] = useState('');
    const [contentTypes, setContentTypes] = useState([]);
+   const [processing, setProcessing] = useState(false);
    const editContent = (vwoVariation) => {
       setSelectContentType(false);
       props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value,{slideIn: { waitForClose: true }}).then((updatedEntry) => {
@@ -82,7 +83,12 @@ function CreateContent(props) {
    }
 
    const onContentTypeClick = async (contentType) => {
+      if(processing){
+         return;
+      }
+      setProcessing(true);
       await props.onCreateVariationEntry(props.variation.vwoVariation, contentType);
+      setProcessing(false);
       setSelectContentType(false);
    }
 

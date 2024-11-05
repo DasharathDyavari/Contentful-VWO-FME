@@ -189,7 +189,7 @@ const EntryEditor = (props) => {
 
   const updateContentfulEntries = async (updatedEntry) => {
     if(updatedEntry){
-      props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => {
+      await props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => {
           let entries = resp.items.map(entry => {
             if(updatedEntry.entity.sys.id === entry.sys.id){
               return updatedEntry.entity;
@@ -241,6 +241,7 @@ const EntryEditor = (props) => {
         let featureFlag = state.featureFlag;
         featureFlag.variations = variations;
         actions.setFeatureFlag(featureFlag);
+        props.sdk.entry.fields.featureFlag.setValue(featureFlag);
         if(updateEntries){
           updateContentfulEntries();
         }
@@ -298,10 +299,11 @@ const EntryEditor = (props) => {
   const onCreateVariationEntry = useCallback(async(vwoVariation, contentType) => {
     const data = await props.sdk.navigator.openNewEntry(contentType.sys.id,{
       slideIn: { waitForClose: true }
-    }).then((updatedEntry) => {
-      updateContentfulEntries(updatedEntry);
+    }).then(async (updatedEntry) => {
       return updatedEntry;
    });
+
+   await updateContentfulEntries(data);
 
     if(!data){
       return;
