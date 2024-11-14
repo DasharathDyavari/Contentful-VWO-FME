@@ -1,19 +1,13 @@
-import { Flex, Button, Heading, List, MenuItem, Paragraph, Modal, Form, Menu, TextLink, FormControl, TextInput, ModalControls, Tooltip, Header, ButtonGroup } from '@contentful/f36-components';
+import { Button, Heading, List, Paragraph } from '@contentful/f36-components';
 import { css } from 'emotion';
 import { mapVwoVariationsAndContent } from '../utils';
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import VariationItem from './VariationItem';
 import tokens from '@contentful/f36-tokens';
 import CreateContent from './CreateContent';
 import AddVwoVariationModal from '../modalComponents/AddVwoVariationModal';
 
 const styles = {
-   heading: css({
-      marginBottom: '10px'
-   }),
-   container: css({
-    width: '100%'
-   }),
    DefaultVariationTile: css({
       display: 'flex',
       alignItems: 'center',
@@ -22,13 +16,6 @@ const styles = {
       border: '1px solid lightgrey',
       borderRadius: '10px'
    }),
-   menuList: css({
-    maxHeight: '200px'
-  }),
-  menuListHeader: css({
-    marginLeft: tokens.spacingS,
-    fontWeight: 'bold'
-  }),
   variationsWithoutLength: css({
     display: 'flex',
     alignItems: 'center',

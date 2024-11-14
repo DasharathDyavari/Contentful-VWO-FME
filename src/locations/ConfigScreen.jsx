@@ -1,10 +1,9 @@
-import React, {useEffect} from 'react';
-import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button, Icon, Stack } from '@contentful/f36-components';
+import React from 'react';
+import { Heading, FormControl, Paragraph, Flex, TextInput, TextLink, Note, Text, Button } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { ExternalLinkIcon, DoneIcon } from '@contentful/f36-icons';
+import { ExternalLinkIcon } from '@contentful/f36-icons';
 import { validateCredentials } from '../utils';
-import ContentTypes from '../components/ContentTypes';
 import Stepper from '../components/Stepper';
 const VARIATION_CONTAINER_ID = 'variationFmeContainer';
 

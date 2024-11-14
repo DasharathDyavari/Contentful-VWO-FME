@@ -1,9 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import { css } from 'emotion';
-import { Paragraph, Flex, Stack, ButtonGroup, TextInput, TextLink, Text, IconButton, Button } from '@contentful/f36-components';
+import { Flex, Stack, ButtonGroup, TextInput, TextLink, Text, IconButton } from '@contentful/f36-components';
 import CreateContent from './CreateContent';
-import tokens from '@contentful/f36-tokens';
-import { EditIcon, DoneIcon } from '@contentful/f36-icons';
+import { EditIcon } from '@contentful/f36-icons';
 
 const styles = {
    variationContainer: css({
@@ -23,7 +22,7 @@ const styles = {
     WebkitLineClamp: 1, // Limit to 2 lines
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    maxWidth: '200px',
+    maxWidth: '150px',
     whiteSpace: 'normal', // Allows text wrapping within lines
   })
  };
@@ -66,7 +65,7 @@ function VariationItem(props) {
         <Flex alignItems="center" marginBottom='spacingXs'>
           {!isEditing ? (
             <Stack flexDirection="row" alignItems="center" spacing="spacingXs">
-              <Text className={styles.variationName}>{`${props.index}_${name}`}</Text>
+              <Text isTruncated className={styles.variationName}>{`${props.index}_${name}`}</Text>
               <IconButton
                 icon={<EditIcon />}
                 aria-label="Edit"

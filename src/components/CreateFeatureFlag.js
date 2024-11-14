@@ -1,37 +1,22 @@
-import { Card, Heading, Box, Text, Paragraph, IconButton, Flex, Grid, Subheading, Tooltip } from '@contentful/f36-components';
-import { Modal, Button, Form, FormControl, TextInput, Textarea, Stack, Radio, ModalControls } from '@contentful/f36-components';
-import React, {useEffect, useState} from 'react';
+import { Heading, Flex, Subheading, Tooltip } from '@contentful/f36-components';
+import { Button, Form, FormControl, TextInput, Textarea, Stack, Radio } from '@contentful/f36-components';
+import React from 'react';
 import useMethods from 'use-methods';
-import { FlagTypes } from './constants';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { PlusIcon, EditIcon, HelpCircleIcon } from '@contentful/f36-icons';
-import EditFeatureFlagModal from './EditFeatureFlagModal';
+import { HelpCircleIcon } from '@contentful/f36-icons';
 import SectionSplitter from './SectionSplitter';
 const CONTENTFUL = 'contentful';
 
+const FlagTypes = {
+   TEMPORARY: 'TEMPORARY',
+   PERMANENT: 'PERMANENT'
+ };
+
 
 const styles = {
-   flexContainer: css({
-      display: 'flex',
-      alignItems: 'center',
-      width: '100%',
-      justifyContent: 'space-between',
-      marginBottom: tokens.spacingL
-   }),
    container: css({
       width: '800px'
-   }),
-   tile: css({
-      width: '600px',
-      height: '150px',
-      border: '1px solid lightgrey',
-      borderRadius: '10px'
-   }),
-   editIcon: css({
-      position: 'absolute',
-      right: '0px',
-      top: '0px'
    }),
    fieldItem: css({
       marginBottom: '10px'

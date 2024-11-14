@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from 'react';
-import { Button, ButtonGroup, IconButton, Text, Flex, TextLink, TextInput, Subheading } from '@contentful/f36-components';
+import React, {useState, useEffect, useCallback} from 'react';
+import { Button, ButtonGroup, IconButton, Text, Flex, TextLink, TextInput } from '@contentful/f36-components';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
 import { EditIcon, ExternalLinkIcon } from '@contentful/f36-icons';
@@ -29,14 +29,14 @@ const Sidebar = (props) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const resetFeatureFlagValue = () => {
+  const resetFeatureFlagValue = useCallback(() => {
     const featureFlag = props.sdk.entry.fields.featureFlag.getValue();
     if(featureFlag){
       setFeatureFlag(featureFlag);
       setName(featureFlag.name || '');
       setDescription(featureFlag.description || '');
     }
-  }
+  }, [props.sdk.entry.fields.featureFlag]);
 
   const updateFeatureFlagDetails = async (updatedFeatureFlag) => {
     return new Promise(async (resolve, reject) => {
@@ -53,12 +53,6 @@ const Sidebar = (props) => {
       }
     });
   }
-
-  const handleKeyPress = async (e) => {
-    if (e.key === 'Enter' && e.target.value.length) {
-      await handleSaveClick();
-    }
-  };
 
   const handleDiscard = () => {
     resetFeatureFlagValue();
@@ -103,7 +97,7 @@ const Sidebar = (props) => {
     return () => {
       unsubsribeFeatureFlagChange();
     }
-  },[props.sdk.entry.fields.featureFlag]);
+  },[props.sdk.entry.fields.featureFlag, resetFeatureFlagValue]);
 
   const isFeatureFlagAdded = !!featureFlag?.id;
 
@@ -149,7 +143,6 @@ const Sidebar = (props) => {
             <TextInput
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyPress={handleKeyPress}
               size='small'
               autoFocus
             />
@@ -189,7 +182,6 @@ const Sidebar = (props) => {
             <TextInput
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              onKeyPress={handleKeyPress}
               size='small'
               autoFocus
             />
@@ -198,7 +190,6 @@ const Sidebar = (props) => {
           <Text fontWeight='fontWeightDemiBold' fontSize="fontSizeM" className={styles.descriptionStyle} marginTop='spacing2Xs'>{description || '-'}</Text>
         )}
       </Flex>
-      {/* {featureFlag?.id && <Button variant="transparent" onClick={props.showFeatureFlagDetails} style={{color: '#0059C8', marginTop: '0px'}}>Show all details</Button>} */}
   </React.Fragment>;
 };
 

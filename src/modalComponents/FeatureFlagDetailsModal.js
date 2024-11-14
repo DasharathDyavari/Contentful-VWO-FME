@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import tokens from '@contentful/f36-tokens';
-import { Modal, Flex, Heading, Paragraph, FormControl, Stack, Text, TextInput, TextLink } from '@contentful/f36-components';
+import { Modal, Flex, Paragraph, Text } from '@contentful/f36-components';
 
 const styles = {
    item: css({

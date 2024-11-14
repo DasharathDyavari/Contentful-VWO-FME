@@ -1,28 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import { locations } from '@contentful/app-sdk';
 import ConfigScreen from './locations/ConfigScreen';
-import Field from './locations/Field';
 import EntryEditor from './locations/EntryEditor';
-import Dialog from './locations/Dialog';
 import VwoClient from './vwo-client';
 import Sidebar from './locations/Sidebar';
 import tokens from '@contentful/f36-tokens';
 import ConnectButton from './ConnectButton';
-import Page from './locations/Page';
-import Home from './locations/Home';
-import { Modal, Flex, Heading, Paragraph, FormControl, Button, Text, TextInput, TextLink } from '@contentful/f36-components';
+import { Modal, Flex, Heading, Paragraph, FormControl, TextInput, TextLink } from '@contentful/f36-components';
 import { css } from 'emotion';
 import { validateCredentials } from './utils';
-
-const ComponentLocationSettings = {
-  [locations.LOCATION_APP_CONFIG]: ConfigScreen,
-  [locations.LOCATION_ENTRY_FIELD]: Field,
-  [locations.LOCATION_ENTRY_EDITOR]: EntryEditor,
-  [locations.LOCATION_DIALOG]: Dialog,
-  [locations.LOCATION_ENTRY_SIDEBAR]: Sidebar,
-  [locations.LOCATION_PAGE]: Page,
-  [locations.LOCATION_HOME]: Home,
-};
 
 const styles = {
   formItem: css({
@@ -31,17 +17,6 @@ const styles = {
 }
 
 const App = (props) => {
-
-  const makeClient = (params) => {
-    return new VwoClient(params);
-  };
-
-  const openAuth = () => {
-    let newState = {...state};
-    newState.showAuth = true;
-    setState(newState);
-  }
-
   const [loading, setLoading] = useState(false);
   const [state,setState] = useState({
     client: null,
@@ -50,7 +25,13 @@ const App = (props) => {
     accountId: props.sdk.parameters.installation.accountId || ''
   });
 
-  const validateUserCredentials = async (props) => {
+  const makeClient = useCallback((params) => new VwoClient(params), []);
+
+  const openAuth = useCallback(() => {
+    setState(prevState => ({ ...prevState, showAuth: true }));
+  }, []);
+
+  const validateUserCredentials = useCallback(async (props) => {
     const apiToken = props.sdk.parameters.installation.accessToken;
     const vwoAccountId = props.sdk.parameters.installation.accountId;
     const areCredentialsValid = await validateCredentials(vwoAccountId, apiToken);
@@ -75,9 +56,9 @@ const App = (props) => {
         showAuth: !props.sdk.location.is(locations.LOCATION_APP_CONFIG)
       });
     }
-  }
+  }, [makeClient, openAuth, state.accountId]);
 
-  const updateCredentials = (credentials) => {
+  const updateCredentials = useCallback((credentials) => {
     if(!credentials.token || !credentials.accountId){
       return;
     }
@@ -92,9 +73,9 @@ const App = (props) => {
       accountId: credentials.accountId,
       showAuth: false
     });
-  }
+  }, [makeClient, openAuth]);
 
-  const connectToVwo = async () => {
+  const connectToVwo = useCallback(async () => {
     setLoading(true);
     const areCredentialsValid = await validateCredentials(state.accountId, state.accessToken);
     if(areCredentialsValid){
@@ -109,23 +90,19 @@ const App = (props) => {
     }
     setLoading(false)
     return areCredentialsValid;
-  }
+  }, [state.accountId, state.accessToken, props.sdk.notifier, updateCredentials]);
 
-  const updateAccountId = (value) => {
-    let newState = {...state};
-    newState.accountId = value;
-    setState(newState);
-  }
+  const updateAccountId = useCallback((value) => {
+    setState(prevState => ({ ...prevState, accountId: value }));
+  }, []);
 
-  const updateAuthToken = (value) => {
-    let newState = {...state};
-    newState.accessToken = value;
-    setState(newState);
-  }
+  const updateAuthToken = useCallback((value) => {
+    setState(prevState => ({ ...prevState, accessToken: value }));
+  }, []);
 
   useEffect(() => {
-    validateUserCredentials(props);
-  },[]);
+    validateUserCredentials();
+  }, [validateUserCredentials]);
 
   if(state.showAuth){
     return <Modal isShown={true}>
@@ -152,13 +129,7 @@ const App = (props) => {
 
   // Perform conditional rendering based on location
   if (props.sdk.location.is(locations.LOCATION_ENTRY_EDITOR)) {
-    return (
-      <EntryEditor
-        sdk={props.sdk}
-        client={state.client}
-        openAuth={openAuth}
-      />
-    );
+    return <EntryEditor sdk={props.sdk} client={state.client} openAuth={openAuth} />
   } else if (props.sdk.location.is(locations.LOCATION_ENTRY_SIDEBAR)) {
     return <Sidebar sdk={props.sdk} client={state.client}/>;
   }

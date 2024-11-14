@@ -103,7 +103,7 @@ const EntryEditor = (props) => {
   const globalState = useMethods(methods, getInitialValues(props.sdk));
   const [state, actions] = globalState;
 
-  const updateVariationsInVwo = async (vwoVariations) => {
+  const updateVariationsInVwo = useCallback(async (vwoVariations) => {
     return new Promise(async (resolve, reject) => {
       const response = await props.client.updateVariations({variations: vwoVariations});
       if(response && response._data){
@@ -119,9 +119,9 @@ const EntryEditor = (props) => {
         reject('Something went wrong while updating VWO Variations. Please try again');
       }
     });
-  }
+  }, [props.client, actions]);
 
-  const updateFeatureFlagDetails = async (updatedFeatureFlag) => {
+  const updateFeatureFlagDetails = useCallback(async (updatedFeatureFlag) => {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await props.client.updateFeatureFlag(updatedFeatureFlag);
@@ -144,7 +144,7 @@ const EntryEditor = (props) => {
         reject(err.message)
       }
     });
-  }
+  }, [props.client, actions, props.sdk.entry.fields.featureFlag]);
 
   const updateVwoVariationName = async (vwoVariation, variationName) => {
     const updatedVwoVariations = state.featureFlag.variations.map(variation => {
@@ -187,7 +187,7 @@ const EntryEditor = (props) => {
     });
   }
 
-  const updateContentfulEntries = async (updatedEntry) => {
+  const updateContentfulEntries = useCallback(async (updatedEntry) => {
     if(updatedEntry){
       await props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => {
           let entries = resp.items.map(entry => {
@@ -201,9 +201,9 @@ const EntryEditor = (props) => {
     } else {
       props.sdk.space.getEntries({ skip: 0, limit: 1000}).then(resp => actions.setEntries(resp.items));
     }
-  }
+  }, [props.sdk.space, actions]);
 
-  const updateVwoVariationContent = useCallback(async (variation, contentId, updateEntries) => {
+  const updateVwoVariationContent = async (variation, contentId, updateEntries) => {
     // Default variation cannot be edited directly. Update variable instead and default variations will be updated
     if(variation.id === 1){
       let featureFlag = state.featureFlag;
@@ -250,9 +250,9 @@ const EntryEditor = (props) => {
         props.sdk.notifier.error(err);
       });
     }
-  });
+  }
 
-  const createFeatureFlag = useCallback(async (featureFlag) => {
+  const createFeatureFlag = async (featureFlag) => {
     if(featureFlag){
       let resp = await props.client.createFeatureFlag(featureFlag);
       if(resp && resp._data){
@@ -275,9 +275,9 @@ const EntryEditor = (props) => {
         props.sdk.notifier.error('Something went wrong. Please try again');
       }
     }
-  });
+  };
 
-  const linkExistingEntry = useCallback(async (vwoVariation) => {
+  const linkExistingEntry = async (vwoVariation) => {
     const data = await props.sdk.dialogs.selectSingleEntry({
       locale: props.sdk.locales.default,
       contentTypes: state.contentTypes.map(contentType => contentType.name).filter(contentType => contentType.name !== props.sdk.contentType.name)
@@ -294,9 +294,9 @@ const EntryEditor = (props) => {
     });
 
     updateVwoVariationContent(vwoVariation, data.sys.id, false);
-  });
+  }
 
-  const onCreateVariationEntry = useCallback(async(vwoVariation, contentType) => {
+  const onCreateVariationEntry = async(vwoVariation, contentType) => {
     const data = await props.sdk.navigator.openNewEntry(contentType.sys.id,{
       slideIn: { waitForClose: true }
     }).then(async (updatedEntry) => {
@@ -317,7 +317,7 @@ const EntryEditor = (props) => {
     });
 
     updateVwoVariationContent(vwoVariation, data.entity.sys.id, true);
-  });
+  };
 
   useEffect( () => {
     fetchInitialData(props)
@@ -331,7 +331,7 @@ const EntryEditor = (props) => {
       .finally(() => {
         actions.setLoading(!props.client);
       });
-  }, [props.client]);
+  }, [props.client, actions, props]);
 
   useEffect(() => {
     const unsubscribeMetaChange = props.sdk.entry.fields.meta.onValueChanged(data => {

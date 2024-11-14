@@ -84,11 +84,3 @@ export const mapVwoVariationsAndContent = (vwoVariations,entries, contentTypes, 
     return {vwoVariation};
   })
 }
-
-export const getUniqueKey = () => {
-  return new Date().getUTCMilliseconds();
-}
-
-export const variationsWithContent = (mappedVariations) => {
-  return mappedVariations.filter(mappedVariation => !mappedVariation.vwoVariation.jsonContent[0]?.value).length;
-}

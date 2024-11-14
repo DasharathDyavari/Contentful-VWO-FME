@@ -1,24 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { EntryCard, TextInput, Modal, List, MenuItem, ButtonGroup, Button, Flex } from '@contentful/f36-components';
-import { PlusIcon, SearchIcon } from '@contentful/f36-icons';
+import { SearchIcon } from '@contentful/f36-icons';
 import { css } from 'emotion';
-import tokens from '@contentful/f36-tokens';
 
 const styles = {
-   container: css({
-     marginTop: '-10px'
-   }),
-   item: css({
-     marginBottom: '0px'
-   }),
    menuList: css({
       maxHeight: '200px', 
       listStyle: 'none',
       padding: '0px'
-   }),
-   menuListHeader: css({
-      marginLeft: tokens.spacingS,
-      fontWeight: 'bold'
    }),
    listItem: css({
       marginBottom: '0px',
@@ -37,70 +26,65 @@ const styles = {
       padding: '20px 40px',
       border: '1px solid lightgrey',
       borderRadius: '5px'
-   }),
-   searchBox: css({
-      position: 'fixed',
-      width: '90%',
-      top: '57px',
-      height: '55px',
-      backgroundColor: 'white',
-      display: 'flex',
-      alignItems: 'flex-end'
    })
  };
 
 function CreateContent(props) {
    const [selectContentType, setSelectContentType] = useState(false);
    const [searchText, setSearchText] = useState('');
-   const [contentTypes, setContentTypes] = useState([]);
    const [processing, setProcessing] = useState(false);
+
+   const contentTypes = useMemo(() => {
+      return props.contentTypes.filter(contentType => 
+         contentType.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+   }, [props.contentTypes, searchText]);
+
    const editContent = (vwoVariation) => {
       setSelectContentType(false);
-      props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value,{slideIn: { waitForClose: true }}).then((updatedEntry) => {
-         props.updateContentfulEntries(updatedEntry);
-      });
-   }
+      props.sdk.navigator.openEntry(vwoVariation.jsonContent[0].value, { slideIn: { waitForClose: true } })
+         .then(updatedEntry => {
+            props.updateContentfulEntries(updatedEntry);
+         });
+   };
 
-   const onSearchTextChange = (searchText) => {
+   const onSearchTextChange = useCallback((searchText) => {
       setSearchText(searchText);
-      let filteredContentTypes = props.contentTypes.filter(contentType => (contentType.name).toLowerCase().includes(searchText.toLowerCase()));
-      setContentTypes(filteredContentTypes);
-   }
+   }, []);
 
-   const removeContent = (vwoVariation) => {
-      // Default variation cannot be removed
-      if(vwoVariation.id === 1){
+   const removeContent = useCallback((vwoVariation) => {
+      if (vwoVariation.id === 1) {
          props.sdk.notifier.error('Default variation content cannot be removed');
          return;
       }
       const meta = props.sdk.entry.fields.meta.getValue() || {};
-
-      if(vwoVariation){
+      if (vwoVariation) {
          delete meta[vwoVariation.id];
          props.sdk.entry.fields.meta.setValue(meta);
          props.updateVwoVariationContent(vwoVariation, '', false);
       }
-   }
+   }, [props]);
 
-   const onContentTypeClick = async (contentType) => {
-      if(processing){
+   const onContentTypeClick = useCallback(async (contentType) => {
+      if (processing) {
          return;
       }
       setProcessing(true);
       await props.onCreateVariationEntry(props.variation.vwoVariation, contentType);
       setProcessing(false);
       setSelectContentType(false);
-   }
+   }, [processing, props]);
 
-   const setInitialData = () => {
-      setContentTypes(props.contentTypes.filter(contentType => contentType.name !== props.sdk.contentType.name));
-   }
+   const setInitialData = useCallback(() => {
+      setSearchText('');
+   }, []);
 
    useEffect(() => {
       setInitialData();
-   },[])
+   }, [setInitialData]);
 
    const isContentAdded = props.variation.variationContent;
+
    return (
       <React.Fragment>
          <Modal isShown={selectContentType} onClose={() => setSelectContentType(false)} className={styles.modal}>
@@ -111,14 +95,12 @@ function CreateContent(props) {
                      onClose={() => setSelectContentType(false)}
                   />
                   <Modal.Content>
-                     {/* <div className={styles.searchBox}> */}
-                        <TextInput
-                           icon={<SearchIcon />}
-                           value={searchText}
-                           placeholder="Search content type"
-                           onChange={(e) => onSearchTextChange(e.target.value)}
-                           />
-                     {/* </div> */}
+=                      <TextInput
+                        icon={<SearchIcon />}
+                        value={searchText}
+                        placeholder="Search content type"
+                        onChange={(e) => onSearchTextChange(e.target.value)}
+                        />
                      {!contentTypes.length && <Flex className={styles.emptyResults} alignItems='center' justifyContent='center'>No results found</Flex>}
                      <List className={styles.menuList}>
                         {contentTypes.map(contentType => {

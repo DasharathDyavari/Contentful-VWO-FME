@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { Flex, Button, Heading, List, MenuItem, Paragraph, Modal, Form, Menu, TextLink, FormControl, TextInput, ModalControls, Tooltip, Header, ButtonGroup } from '@contentful/f36-components';
+import { Button, Modal, Form, FormControl, TextInput, ModalControls } from '@contentful/f36-components';
 
 function AddVwoVariationModal(props) {
 
